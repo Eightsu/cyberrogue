@@ -71,7 +71,6 @@ impl Map {
             height: 50,
             revealed_tiles: vec![false; 80 * 50],
             visible_tiles: vec![false; 80 * 50],
-
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -122,24 +121,23 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
     let mut x = 0;
 
     for (idx, tile) in map.tiles.iter().enumerate() {
-        let pt = Point::new(x, y);
-
         if map.revealed_tiles[idx] {
             let glyph;
             let mut fg;
             match tile {
                 TileType::Floor => {
                     glyph = rltk::to_cp437('.');
-                    fg = RGB::from_f32(0.0,0.5,0.5);
-
+                    fg = RGB::from_f32(0.0, 0.5, 0.5);
                 }
                 TileType::Wall => {
                     glyph = rltk::to_cp437('#');
-                    fg = RGB::from_f32(0.0,1.0,0.0)
+                    fg = RGB::from_f32(0.0, 1.0, 0.0)
                 }
             }
-            if !map.visible_tiles[idx] {fg = fg.to_greyscale()}
-            ctx.set(x,y, fg, RGB::from_f32(0.,0.,0.), glyph);
+            if !map.visible_tiles[idx] {
+                fg = fg.to_greyscale()
+            }
+            ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
         }
 
         // Move the coordinates
