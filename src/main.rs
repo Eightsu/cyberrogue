@@ -1,4 +1,4 @@
-use rltk::{Console, GameState, Rltk, RGB, Point};
+use rltk::{Console, GameState, Point, Rltk, RGB};
 use specs::prelude::*;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
@@ -45,7 +45,7 @@ impl GameState for State {
             self.run_systems();
             self.runstate = RunState::Paused;
         } else {
-            self.runstate = player_input(self,ctx);
+            self.runstate = player_input(self, ctx);
         }
 
         //let map = self.ecs.fetch::<Vec<TileType>>();
@@ -70,13 +70,14 @@ fn main() {
 
     let mut gs = State {
         ecs: World::new(),
-        runstate: RunState::Running
+        runstate: RunState::Running,
     };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Monster>();
+    gs.ecs.register::<Name>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -98,22 +99,30 @@ fn main() {
             range: 8,
             dirty: true,
         })
+        .with(Name{name: "Hero".to_string()})
         .build();
 
     // Generate Monsters
     let mut rng = rltk::RandomNumberGenerator::new();
-    for room in map.rooms.iter().skip(1) {
+    for (i, room) in map.rooms.iter().skip(1).enumerate() {
         // '.skip(1) so monster doesn't spawn in first room.
 
         let (x, y) = room.center();
 
         let glyph: u8;
+        let name: String;
         let roll = rng.roll_dice(1, 2);
 
         //generate random monster.
         match roll {
-            1 => glyph = rltk::to_cp437('a'), // android
-            _ => glyph = rltk::to_cp437('r'), // robot
+            1 => {
+                glyph = rltk::to_cp437('a');
+                name = "android".to_string();
+            } // android
+            _ => {
+                glyph = rltk::to_cp437('r');
+                name = "robot".to_string();
+            } // robot
         }
 
         gs.ecs
@@ -130,11 +139,14 @@ fn main() {
                 dirty: true,
             })
             .with(Monster {})
+            .with(Name {
+                name: format!("{} #{}", &name, i),
+            })
             .build();
     }
 
     gs.ecs.insert(map); // resource
-    gs.ecs.insert(Point::new(player_x,player_y));
+    gs.ecs.insert(Point::new(player_x, player_y));
 
     rltk::main_loop(context, gs);
 }

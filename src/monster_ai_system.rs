@@ -1,5 +1,5 @@
 extern crate specs;
-use super::{Map, Monster, Position, Viewshed};
+use super::{Monster, Name, Viewshed};
 use specs::prelude::*;
 extern crate rltk;
 use rltk::{console, Point};
@@ -11,16 +11,16 @@ impl<'a> System<'a> for MonsterAI {
         ReadExpect<'a, Point>,
         ReadStorage<'a, Viewshed>,
         ReadStorage<'a, Monster>,
+        ReadStorage<'a, Name>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
+        let (player_pos, viewshed, monster, name) = data; //
 
-        let (player_pos, viewshed, monster) = data;
-
-        for (viewshed, _monster) in (&viewshed, &monster).join() {
+        for (viewshed, _monster, name) in (&viewshed, &monster, &name).join() {
             // console::log("Monster considers their own existence");
             if viewshed.visible_tiles.contains(&*player_pos) {
-                console::log(format!("Monster shouts insults!"));
+                console::log(format!("{} shouts insults!", name.name));
             }
         }
     }
