@@ -4,6 +4,8 @@ mod visibility_system;
 use visibility_system::VisibilitySystem;
 mod monster_ai_system;
 use monster_ai_system::MonsterAI;
+mod map_indexing_system;
+use map_indexing_system::MapIndexingSystem;
 mod components;
 pub use components::*;
 mod map;
@@ -31,6 +33,9 @@ impl State {
 
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+
+        let mut map_index = MapIndexingSystem {};
+        map_index.run_now(&self.ecs);
 
         self.ecs.maintain(); // MUST BE AT BOTTOM
     }
@@ -78,6 +83,8 @@ fn main() {
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
 
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
@@ -94,12 +101,20 @@ fn main() {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(CombatStats{
+            max_hp: 30,
+            hp: 30,
+            defense: 2,
+            power: 6
+        })
         .with(Viewshed {
             visible_tiles: Vec::new(),
             range: 8,
             dirty: true,
         })
-        .with(Name{name: "Hero".to_string()})
+        .with(Name {
+            name: "Hero".to_string(),
+        })
         .build();
 
     // Generate Monsters
@@ -139,6 +154,13 @@ fn main() {
                 dirty: true,
             })
             .with(Monster {})
+            .with(CombatStats{
+                max_hp: 18,
+                hp: 18,
+                defense: 1,
+                power: 3,
+            })
+            .with(BlocksTile {})
             .with(Name {
                 name: format!("{} #{}", &name, i),
             })
