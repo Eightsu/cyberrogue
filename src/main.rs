@@ -1,4 +1,4 @@
-use rltk::{Console, GameState, Point, Rltk, RGB};
+use rltk::{Console, GameState, Point, Rltk};
 use specs::prelude::*;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
@@ -18,6 +18,7 @@ mod player;
 use player::*;
 mod gui;
 mod rect;
+mod spawner;
 pub use rect::Rect;
 mod gamelog;
 mod spawner;
@@ -128,15 +129,15 @@ fn main() {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    // generate player
-    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y );
 
+    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     // Generate Monsters
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
-    for room in map.rooms.iter().skip(1) {
+for room in map.rooms.iter().skip(1) {
     spawner::spawn_room(&mut gs.ecs, room);
-    }
+}
+
 
    
     gs.ecs.insert(player_entity);
