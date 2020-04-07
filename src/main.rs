@@ -16,6 +16,7 @@ mod map;
 pub use map::*;
 mod player;
 use player::*;
+mod gui;
 mod rect;
 pub use rect::Rect;
 
@@ -42,12 +43,11 @@ impl State {
         let mut map_index = MapIndexingSystem {};
         map_index.run_now(&self.ecs);
 
-        let mut melee = MeleeCombatSystem{};
+        let mut melee = MeleeCombatSystem {};
         melee.run_now(&self.ecs);
 
-        let mut damage = DamageSystem{};
+        let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
-
 
         self.ecs.maintain(); // MUST BE AT BOTTOM
     }
@@ -68,25 +68,19 @@ impl GameState for State {
 
         match new_run_state {
             RunState::PreRun => {
-
                 self.run_systems();
                 new_run_state = RunState::AwaitingInput;
-            },
+            }
             RunState::AwaitingInput => {
                 new_run_state = player_input(self, ctx);
-
             }
-            ,
             RunState::PlayerTurn => {
                 self.run_systems();
                 new_run_state = RunState::MonsterTurn;
-
-
-            },
+            }
             RunState::MonsterTurn => {
                 self.run_systems();
                 new_run_state = RunState::AwaitingInput
-
             }
         }
 
@@ -94,7 +88,6 @@ impl GameState for State {
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = new_run_state;
         }
-
 
         //let map = self.ecs.fetch::<Vec<TileType>>();
         damage_system::delete_the_dead(&mut self.ecs);
@@ -107,9 +100,10 @@ impl GameState for State {
         for (pos, render) in (&positions, &renderables).join() {
             let idx = map.xy_idx(pos.x, pos.y);
             if map.visible_tiles[idx] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
             }
         }
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
@@ -117,9 +111,7 @@ fn main() {
     use rltk::RltkBuilder;
     let context = RltkBuilder::simple80x50().with_title("Mainframe").build();
 
-    let mut gs = State {
-        ecs: World::new(),
-    };
+    let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
@@ -133,7 +125,8 @@ fn main() {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let player_entity = gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
         .with(Position {
             x: player_x,
