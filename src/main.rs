@@ -10,6 +10,8 @@ mod melee_combat_system;
 use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
+mod inventory_system;
+use inventory_system::InventorySystem;
 mod components;
 pub use components::*;
 mod map;
@@ -50,6 +52,9 @@ impl State {
 
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
+
+        let mut pickup = InventorySystem {};
+        pickup.run_now(&self.ecs);
 
         self.ecs.maintain(); // MUST BE AT BOTTOM
     }
@@ -127,6 +132,8 @@ fn main() {
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<HPotion>();
     gs.ecs.register::<Item>();
+    gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<InBackpack>();
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 

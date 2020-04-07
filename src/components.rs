@@ -49,6 +49,12 @@ pub struct WantsToMelee {
     pub target: Entity,
 }
 
+#[derive(Component, Debug, Clone)]
+pub struct WantsToPickupItem {
+    pub collected_by: Entity,
+    pub item: Entity,
+}
+
 #[derive(Component, Debug)]
 pub struct Item {}
 
@@ -60,6 +66,11 @@ pub struct HPotion {
 #[derive(Component, Debug)]
 pub struct SufferDamage {
     pub amount: Vec<i32>,
+}
+
+#[derive(Component, Debug)]
+pub struct InBackpack {
+    pub owner: Entity,
 }
 
 impl SufferDamage {
