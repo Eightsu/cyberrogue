@@ -15,16 +15,15 @@ impl<'a> System<'a> for MapIndexingSystem {
         let (mut map, position, blockers, entities) = data; // order corresponds to order in system data
 
         map.populate_blocked();
+        map.clear_content_index(); // make sure to clear content, otherwise *weird bugs*
 
-        for (entity,position) in (&entities, &position).join() {
+        for (entity, position) in (&entities, &position).join() {
             let idx = map.xy_idx(position.x, position.y);
 
-
             // if blocked, update vector
-            let _p : Option<&BlocksTile> = blockers.get(entity);
+            let _p: Option<&BlocksTile> = blockers.get(entity);
             if let Some(_p) = _p {
-
-            map.blocked[idx] = true;
+                map.blocked[idx] = true;
             }
             // Push the entity to the appropriate index slot.
             map.tile_content[idx].push(entity);

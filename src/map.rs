@@ -18,7 +18,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
-    pub tile_content: Vec<Vec<Entity>>
+    pub tile_content: Vec<Vec<Entity>>,
 }
 
 impl Algorithm2D for Map {
@@ -38,27 +38,42 @@ impl BaseMap for Map {
         rltk::DistanceAlg::Pythagoras.distance2d(p1, p2)
     }
 
-      fn get_available_exits(&self, idx:usize) -> Vec<(usize, f32)> {
-        let mut exits : Vec<(usize, f32)> = Vec::new();
+    fn get_available_exits(&self, idx: usize) -> Vec<(usize, f32)> {
+        let mut exits: Vec<(usize, f32)> = Vec::new();
         let x = idx as i32 % self.width;
         let y = idx as i32 / self.width;
         let w = self.width as usize;
 
         // Cardinal directions
-        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)) };
-        if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)) };
-        if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)) };
-        if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)) };
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        };
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        };
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - w, 1.0))
+        };
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + w, 1.0))
+        };
 
         // Diagonals
-        if self.is_exit_valid(x-1, y-1) { exits.push(((idx-w)-1, 1.45)); }
-        if self.is_exit_valid(x+1, y-1) { exits.push(((idx-w)+1, 1.45)); }
-        if self.is_exit_valid(x-1, y+1) { exits.push(((idx+w)-1, 1.45)); }
-        if self.is_exit_valid(x+1, y+1) { exits.push(((idx+w)+1, 1.45)); }
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push(((idx - w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push(((idx - w) + 1, 1.45));
+        }
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push(((idx + w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push(((idx + w) + 1, 1.45));
+        }
 
         exits
-
-      }
+    }
 }
 
 impl Map {
@@ -108,7 +123,7 @@ impl Map {
         }
     }
     pub fn clear_content_index(&mut self) {
-        for content in self.tile_content.iter_mut(){
+        for content in self.tile_content.iter_mut() {
             content.clear(); // vector function
         }
     }
@@ -122,7 +137,7 @@ impl Map {
             revealed_tiles: vec![false; 80 * 50],
             visible_tiles: vec![false; 80 * 50],
             blocked: vec![false; 80 * 50],
-            tile_content: vec![Vec::new(); 80 * 50]
+            tile_content: vec![Vec::new(); 80 * 50],
         };
 
         const MAX_ROOMS: i32 = 30;
