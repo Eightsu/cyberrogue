@@ -20,6 +20,7 @@ mod gui;
 mod rect;
 pub use rect::Rect;
 mod gamelog;
+mod spawner;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -110,9 +111,7 @@ impl GameState for State {
 
 fn main() {
     use rltk::RltkBuilder;
-    let mut context =
-        RltkBuilder::simple80x50()
-        .with_title("Mainframe").build();
+    let mut context = RltkBuilder::simple80x50().with_title("Mainframe").build();
     context.with_post_scanlines(true);
 
     let mut gs = State { ecs: World::new() };
@@ -129,85 +128,18 @@ fn main() {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let player_entity = gs
-        .ecs
-        .create_entity()
-        .with(Position {
-            x: player_x,
-            y: player_y,
-        })
-        .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::CYAN),
-            bg: RGB::named(rltk::BLACK),
-        })
-        .with(Player {})
-        .with(CombatStats {
-            max_hp: 30,
-            hp: 30,
-            defense: 2,
-            power: 6,
-        })
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: 8,
-            dirty: true,
-        })
-        .with(Name {
-            name: "Hero".to_string(),
-        })
-        .build();
+    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y );
+
 
     // Generate Monsters
-    let mut rng = rltk::RandomNumberGenerator::new();
-    for (i, room) in map.rooms.iter().skip(1).enumerate() {
-        // '.skip(1) so monster doesn't spawn in first room.
 
-        let (x, y) = room.center();
-
-        let glyph: u8;
-        let name: String;
-        let roll = rng.roll_dice(1, 2);
-
-        //generate random monster.
-        match roll {
-            1 => {
-                glyph = rltk::to_cp437('a');
-                name = "android".to_string();
-            } // android
-            _ => {
-                glyph = rltk::to_cp437('r');
-                name = "robot".to_string();
-            } // robot
-        }
-
-        gs.ecs
-            .create_entity()
-            .with(Position { x, y })
-            .with(Renderable {
-                glyph: glyph,
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
-            })
-            .with(Viewshed {
-                visible_tiles: Vec::new(),
-                range: 8,
-                dirty: true,
-            })
-            .with(Monster {})
-            .with(CombatStats {
-                max_hp: 18,
-                hp: 18,
-                defense: 1,
-                power: 3,
-            })
-            .with(BlocksTile {})
-            .with(Name {
-                name: format!("{} #{}", &name, i),
-            })
-            .build();
+    gs.ecs.insert(rltk::RandomNumberGenerator::new());
+    for room in map.rooms.iter().skip(1) {
+    let (x,y) = room.center();
+    spawner::random_monster(&mut gs.ecs, x, y);
     }
 
+   
     gs.ecs.insert(player_entity);
     gs.ecs.insert(map); // resource
     gs.ecs.insert(Point::new(player_x, player_y));

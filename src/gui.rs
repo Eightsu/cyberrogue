@@ -1,5 +1,5 @@
-use super::{gamelog::GameLog, CombatStats, Player, Position, Name, Map};
-use rltk::{Console, Rltk, RGB, Point};
+use super::{gamelog::GameLog, CombatStats, Map, Name, Player, Position};
+use rltk::{Console, Point, Rltk, RGB};
 use specs::prelude::*;
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
@@ -87,13 +87,7 @@ fn draw_tooltips(ecs: &World, ctx: &mut Rltk) {
             let left_x = mouse_pos.0 - width;
             let mut y = mouse_pos.1;
             for s in tooltip.iter() {
-                ctx.print_color(
-                    left_x,
-                    y,
-                    RGB::named(rltk::RED),
-                    RGB::named(rltk::BLACK),
-                    s,
-                );
+                ctx.print_color(left_x, y, RGB::named(rltk::RED), RGB::named(rltk::BLACK), s);
                 let padding = (width - s.len() as i32) - 1;
                 for i in 0..padding {
                     ctx.print_color(
