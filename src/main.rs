@@ -104,14 +104,16 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
             }
         }
-        gui::draw_ui(&
-                     self.ecs, ctx);
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
 fn main() {
     use rltk::RltkBuilder;
-    let context = RltkBuilder::simple80x50().with_title("Mainframe").build();
+    let mut context =
+        RltkBuilder::simple80x50()
+        .with_title("Mainframe").build();
+    context.with_post_scanlines(true);
 
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
@@ -210,7 +212,9 @@ fn main() {
     gs.ecs.insert(map); // resource
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(RunState::PreRun);
-    gs.ecs.insert(gamelog::GameLog{entries: vec!["Welc0me to MainFrame".to_string()]});
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welc0me to MainFrame".to_string()],
+    });
 
     rltk::main_loop(context, gs);
 }
