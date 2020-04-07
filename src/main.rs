@@ -19,6 +19,7 @@ use player::*;
 mod gui;
 mod rect;
 pub use rect::Rect;
+mod gamelog;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -103,7 +104,8 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
             }
         }
-        gui::draw_ui(&self.ecs, ctx);
+        gui::draw_ui(&
+                     self.ecs, ctx);
     }
 }
 
@@ -134,7 +136,7 @@ fn main() {
         })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
+            fg: RGB::named(rltk::CYAN),
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
@@ -208,6 +210,7 @@ fn main() {
     gs.ecs.insert(map); // resource
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(gamelog::GameLog{entries: vec!["Welc0me to MainFrame".to_string()]});
 
     rltk::main_loop(context, gs);
 }

@@ -198,11 +198,11 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
             match tile {
                 TileType::Floor => {
                     glyph = rltk::to_cp437('.');
-                    fg = RGB::from_f32(0.0, 0.5, 0.5);
+                    fg = RGB::from_f32(0.0, 0.8, 0.5);
                 }
                 TileType::Wall => {
                     glyph = rltk::to_cp437('#');
-                    fg = RGB::from_f32(0.0, 1.0, 0.0)
+                    fg = RGB::from_f32(0.3, 0.1, 1.0)
                 }
             }
             if !map.visible_tiles[idx] {
