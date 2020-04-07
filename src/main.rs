@@ -125,6 +125,8 @@ fn main() {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<SufferDamage>();
+    gs.ecs.register::<HPotion>();
+    gs.ecs.register::<Item>();
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
@@ -132,9 +134,9 @@ fn main() {
 
     // Generate Monsters
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
-for room in map.rooms.iter().skip(1) {
-    spawner::spawn_room(&mut gs.ecs, room);
-}
+    for room in map.rooms.iter().skip(1) {
+        spawner::spawn_room(&mut gs.ecs, room);
+    }
 
     gs.ecs.insert(player_entity);
     gs.ecs.insert(map); // resource
