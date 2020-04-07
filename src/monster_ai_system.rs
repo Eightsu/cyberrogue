@@ -2,7 +2,7 @@ extern crate specs;
 use super::{Map, Monster, Position, RunState, Viewshed, WantsToMelee};
 use specs::prelude::*;
 extern crate rltk;
-use rltk::{Point};
+use rltk::Point;
 
 pub struct MonsterAI {}
 

@@ -132,10 +132,9 @@ fn main() {
 
     // Generate Monsters
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
-    for room in map.rooms.iter().skip(1) {
-        let (x, y) = room.center();
-        spawner::random_monster(&mut gs.ecs, x, y);
-    }
+for room in map.rooms.iter().skip(1) {
+    spawner::spawn_room(&mut gs.ecs, room);
+}
 
     gs.ecs.insert(player_entity);
     gs.ecs.insert(map); // resource
