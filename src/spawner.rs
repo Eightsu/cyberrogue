@@ -138,12 +138,12 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
-            glyph: rltk::to_cp437('X'),
-            fg: RGB::named(rltk::RED),
+            glyph: rltk::to_cp437('±'),
+            fg: RGB::named(rltk::GHOSTWHITE),
             bg: RGB::named(rltk::BLACK),
         })
         .with(Name {
-            name: "Volt Pack".to_string(),
+            name: "Volt Pack(HP)".to_string(),
         })
         .with(Item {})
         .with(HPotion { heal_amount: 10 })
