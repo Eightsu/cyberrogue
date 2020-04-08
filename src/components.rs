@@ -99,6 +99,16 @@ pub struct Ranged {
 }
 
 #[derive(Component, Debug)]
+pub struct AreaOfEffect {
+    pub radius: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct Disable {
+    pub turns: i32,
+}
+
+#[derive(Component, Debug)]
 pub struct InflictsDamage {
     pub damage: i32,
 }

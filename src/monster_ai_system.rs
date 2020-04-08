@@ -1,5 +1,5 @@
 extern crate specs;
-use super::{Map, Monster, Position, RunState, Viewshed, WantsToMelee};
+use super::{Disable, Map, Monster, Position, RunState, Viewshed, WantsToMelee};
 use specs::prelude::*;
 extern crate rltk;
 use rltk::Point;
@@ -18,6 +18,7 @@ impl<'a> System<'a> for MonsterAI {
         ReadStorage<'a, Monster>,
         WriteStorage<'a, Position>,
         WriteStorage<'a, WantsToMelee>,
+        WriteStorage<'a, Disable>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
@@ -31,6 +32,7 @@ impl<'a> System<'a> for MonsterAI {
             monster,
             mut position,
             mut wants_to_melee,
+            mut disabled,
         ) = data;
 
         if *runstate != RunState::MonsterTurn {
@@ -40,35 +42,50 @@ impl<'a> System<'a> for MonsterAI {
         for (entity, mut viewshed, _monster, mut pos) in
             (&entities, &mut viewshed, &monster, &mut position).join()
         {
-            let distance =
-                rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+            let mut can_act = true;
 
-            if distance < 1.5 {
-                // Attack goes here
-                wants_to_melee
-                    .insert(
-                        entity,
-                        WantsToMelee {
-                            target: *player_entity,
-                        },
-                    )
-                    .expect("Unable to attack!");
-            } else if viewshed.visible_tiles.contains(&*player_pos) {
-                let path = rltk::a_star_search(
-                    map.xy_idx(pos.x, pos.y) as i32,
-                    map.xy_idx(player_pos.x, player_pos.y) as i32,
-                    &*map,
-                );
+            let is_disabled = disabled.get_mut(entity);
 
-                if path.success && path.steps.len() > 1 {
-                    let mut idx = map.xy_idx(pos.x, pos.y);
-                    map.blocked[idx] = false;
-                    pos.x = path.steps[1] as i32 % map.width;
-                    pos.y = path.steps[1] as i32 / map.width;
+            if let Some(entity_disabled) = is_disabled {
+                entity_disabled.turns -= 1;
 
-                    idx = map.xy_idx(pos.x, pos.y);
-                    map.blocked[idx] = true;
-                    viewshed.dirty = true;
+                if entity_disabled.turns < 1 {
+                    disabled.remove(entity);
+                }
+                can_act = false;
+            }
+
+            if can_act {
+                let distance =
+                    rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+
+                if distance < 1.5 {
+                    // Attack goes here
+                    wants_to_melee
+                        .insert(
+                            entity,
+                            WantsToMelee {
+                                target: *player_entity,
+                            },
+                        )
+                        .expect("Unable to attack!");
+                } else if viewshed.visible_tiles.contains(&*player_pos) {
+                    let path = rltk::a_star_search(
+                        map.xy_idx(pos.x, pos.y) as i32,
+                        map.xy_idx(player_pos.x, player_pos.y) as i32,
+                        &*map,
+                    );
+
+                    if path.success && path.steps.len() > 1 {
+                        let mut idx = map.xy_idx(pos.x, pos.y);
+                        map.blocked[idx] = false;
+                        pos.x = path.steps[1] as i32 % map.width;
+                        pos.y = path.steps[1] as i32 / map.width;
+
+                        idx = map.xy_idx(pos.x, pos.y);
+                        map.blocked[idx] = true;
+                        viewshed.dirty = true;
+                    }
                 }
             }
         }

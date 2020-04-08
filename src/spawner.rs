@@ -1,6 +1,6 @@
 use super::{
-    BlocksTile, CombatStats, Consumeable, InflictsDamage, Item, Monster, Name, Player, Position,
-    ProvidesHealing, Ranged, Rect, Renderable, Viewshed, MAPWIDTH,
+    AreaOfEffect, BlocksTile, CombatStats, Consumeable, Disable, InflictsDamage, Item, Monster,
+    Name, Player, Position, ProvidesHealing, Ranged, Rect, Renderable, Viewshed, MAPWIDTH,
 };
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -108,7 +108,9 @@ fn random_item(ecs: &mut World, x: i32, y: i32) {
         roll = rng.roll_dice(1, 4);
     }
     match roll {
-        1 => health_potion(ecs, x, y),
+        1 => volt_pack(ecs, x, y),
+        2 => shockwave(ecs, x, y),
+        3 => overload(ecs, x, y),
         _ => buster(ecs, x, y),
     }
 }
@@ -148,7 +150,8 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
         .build();
 }
 
-fn health_potion(ecs: &mut World, x: i32, y: i32) {
+// HEAL
+fn volt_pack(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
@@ -166,6 +169,7 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
+// RANGED ATTACK
 fn buster(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
         .with(Position { x, y })
@@ -180,7 +184,48 @@ fn buster(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(Consumeable {})
-        .with(Ranged { range: 5 })
-        .with(InflictsDamage { damage: 40 })
+        .with(Ranged { range: 8 })
+        .with(InflictsDamage { damage: 12 })
+        .build();
+}
+
+// RANGED ATTACK WITH AOE
+fn shockwave(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('≡'),
+            fg: RGB::named(rltk::YELLOW2),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Shockwave Chip".to_string(),
+        })
+        .with(Item {})
+        .with(Consumeable {})
+        .with(Ranged { range: 6 })
+        .with(InflictsDamage { damage: 5 })
+        .with(AreaOfEffect { radius: 3 })
+        .build();
+}
+
+// TEMPORARILY INCAPACITATE ENEMY
+fn overload(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('¿'),
+            fg: RGB::named(rltk::WHITE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Overload Chip".to_string(),
+        })
+        .with(Item {})
+        .with(Consumeable {})
+        .with(Ranged { range: 3 })
+        .with(Disable { turns: 3 })
         .build();
 }
