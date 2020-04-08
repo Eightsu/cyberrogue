@@ -1,6 +1,6 @@
 use super::{
-    BlocksTile, CombatStats, HPotion, Item, Monster, Name, Player, Position, Rect, Renderable,
-    Viewshed, MAPWIDTH,
+    BlocksTile, CombatStats, Consumeable, InflictsDamage, Item, Monster, Name, Player, Position,
+    ProvidesHealing, Ranged, Rect, Renderable, Viewshed, MAPWIDTH,
 };
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -27,10 +27,10 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             name: "Hero".to_string(),
         })
         .with(CombatStats {
-            max_hp: 30,
-            hp: 30,
+            max_hp: 100,
+            hp: 100,
             defense: 2,
-            power: 5,
+            power: 10,
         })
         .build()
 }
@@ -81,11 +81,11 @@ pub fn spawn_room(ecs: &mut World, room: &Rect) {
         random_monster(ecs, x as i32, y as i32);
     }
 
-    // Actually spawn the potions
+    // Actually spawn the items
     for idx in item_spawn_points.iter() {
         let x = *idx % MAPWIDTH;
         let y = *idx / MAPWIDTH;
-        health_potion(ecs, x as i32, y as i32);
+        random_item(ecs, x as i32, y as i32);
     }
 }
 
@@ -98,6 +98,18 @@ pub fn random_monster(ecs: &mut World, x: i32, y: i32) {
     match roll {
         1 => android(ecs, x, y),
         _ => robot(ecs, x, y),
+    }
+}
+
+fn random_item(ecs: &mut World, x: i32, y: i32) {
+    let roll: i32;
+    {
+        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+        roll = rng.roll_dice(1, 4);
+    }
+    match roll {
+        1 => health_potion(ecs, x, y),
+        _ => buster(ecs, x, y),
     }
 }
 
@@ -149,6 +161,26 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
             name: "Volt Pack(HP)".to_string(),
         })
         .with(Item {})
-        .with(HPotion { heal_amount: 10 })
+        .with(Consumeable {})
+        .with(ProvidesHealing { heal_amount: 10 })
+        .build();
+}
+
+fn buster(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('Θ'),
+            fg: RGB::named(rltk::GREENYELLOW),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Buster Chip".to_string(),
+        })
+        .with(Item {})
+        .with(Consumeable {})
+        .with(Ranged { range: 5 })
+        .with(InflictsDamage { damage: 40 })
         .build();
 }

@@ -59,6 +59,7 @@ pub struct WantsToPickupItem {
 #[derive(Component, Debug)]
 pub struct WantsToUseItem {
     pub item: Entity,
+    pub target: Option<rltk::Point>,
 }
 
 #[derive(Component, Debug)]
@@ -90,6 +91,16 @@ pub struct SufferDamage {
 #[derive(Component, Debug)]
 pub struct InBackpack {
     pub owner: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct Ranged {
+    pub range: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct InflictsDamage {
+    pub damage: i32,
 }
 
 impl SufferDamage {
