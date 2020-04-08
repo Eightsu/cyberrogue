@@ -13,6 +13,7 @@ pub struct Renderable {
     pub glyph: u8,
     pub fg: RGB,
     pub bg: RGB,
+    pub render_order: i32 //0..n 0 is first, while n is last
 }
 
 #[derive(Component, Debug)]
@@ -67,6 +68,11 @@ pub struct WantsToDropItem {
 
 #[derive(Component, Debug)]
 pub struct Item {}
+
+#[derive(Component, Debug)]
+pub struct Consumeable{
+
+}
 
 #[derive(Component, Debug)]
 pub struct HPotion {
