@@ -11,7 +11,7 @@ use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
-use inventory_system::{InventorySystem, UseConsumableSystem};
+use inventory_system::{InventorySystem, ItemDropSystem, UseConsumableSystem};
 mod components;
 
 pub use components::*;
@@ -32,6 +32,7 @@ pub enum RunState {
     PlayerTurn,
     MonsterTurn,
     ShowInventory,
+    ShowDropItem,
 }
 
 pub struct State {
@@ -60,6 +61,9 @@ impl State {
 
         let mut volt_packs = UseConsumableSystem {};
         volt_packs.run_now(&self.ecs);
+
+        let mut drop_items = ItemDropSystem {};
+        drop_items.run_now(&self.ecs);
 
         self.ecs.maintain(); // MUST BE AT BOTTOM
     }
@@ -117,6 +121,25 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::ShowDropItem => {
+                //
+                let result = gui::drop_item_menu(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => new_run_state = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.unwrap();
+                        let mut intent = self.ecs.write_storage::<WantsToDropItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToDropItem { item: item_entity },
+                            )
+                            .expect("Unable to drop item");
+                        new_run_state = RunState::PlayerTurn;
+                    }
+                }
+            }
         }
 
         {
@@ -163,6 +186,7 @@ fn main() {
     gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<WantsToConsumeItem>();
+    gs.ecs.register::<WantsToDropItem>();
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 

@@ -1,6 +1,6 @@
 use super::{
     gamelog::GameLog, CombatStats, HPotion, InBackpack, Name, Position, WantsToConsumeItem,
-    WantsToPickupItem,
+    WantsToDropItem, WantsToPickupItem,
 };
 use specs::prelude::*;
 
@@ -41,6 +41,61 @@ impl<'a> System<'a> for InventorySystem {
         }
 
         wants_pickup.clear();
+    }
+}
+
+pub struct ItemDropSystem {}
+
+impl<'a> System<'a> for ItemDropSystem {
+    #[allow(clippy::type_complexity)]
+    type SystemData = (
+        ReadExpect<'a, Entity>,
+        WriteExpect<'a, GameLog>,
+        Entities<'a>,
+        WriteStorage<'a, WantsToDropItem>,
+        ReadStorage<'a, Name>,
+        WriteStorage<'a, Position>,
+        WriteStorage<'a, InBackpack>,
+    );
+
+    fn run(&mut self, data: Self::SystemData) {
+        let (
+            player_entity,
+            mut gamelog,
+            entities,
+            mut dropping_item,
+            names,
+            mut positions,
+            mut backpack,
+        ) = data;
+
+        for (entity, dropped_item) in (&entities, &dropping_item).join() {
+            let mut entity_position: Position = Position { x: 0, y: 0 };
+
+            {
+                // closure
+                let dropping_position = positions.get(entity).unwrap();
+                entity_position.x = dropping_position.x;
+                entity_position.y = dropping_position.y;
+            }
+            positions
+                .insert(
+                    dropped_item.item,
+                    Position {
+                        x: entity_position.x,
+                        y: entity_position.y,
+                    },
+                )
+                .expect("unable to render position");
+
+            if entity == *player_entity {
+                gamelog.entries.push(format!(
+                    "You drop the {}.",
+                    names.get(dropped_item.item).unwrap().name
+                ));
+            }
+        }
+        dropping_item.clear();
     }
 }
 
