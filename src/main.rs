@@ -108,13 +108,11 @@ impl GameState for State {
                     gui::ItemMenuResult::NoResponse => {}
                     gui::ItemMenuResult::Selected => {
                         let item_entity = result.1.unwrap();
-                        let mut intent = self.ecs.write_storage::<WantsToConsumeItem>();
+                        let mut intent = self.ecs.write_storage::<WantsToUseItem>();
                         intent
                             .insert(
                                 *self.ecs.fetch::<Entity>(),
-                                WantsToConsumeItem {
-                                    volt_pack: item_entity,
-                                },
+                                WantsToUseItem { item: item_entity },
                             )
                             .expect("Unable to insert intent");
                         new_run_state = RunState::PlayerTurn;
@@ -158,14 +156,13 @@ impl GameState for State {
         // https://specs.amethyst.rs/docs/tutorials/11_advanced_component.html?highlight=sort#sorting-entities-based-on-component-value
         let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
 
-        data.sort_by(|&a, &b | b.1.render_order.cmp(&a.1.render_order));
+        data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
         // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/sorting.html
 
-        for(pos, render) in data.iter() {
+        for (pos, render) in data.iter() {
             let idx = map.xy_idx(pos.x, pos.y);
             if map.visible_tiles[idx] {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-
             }
         }
 
@@ -191,9 +188,11 @@ fn main() {
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<HPotion>();
     gs.ecs.register::<Item>();
+    gs.ecs.register::<ProvidesHealing>();
+    gs.ecs.register::<Consumeable>();
     gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<InBackpack>();
-    gs.ecs.register::<WantsToConsumeItem>();
+    gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToDropItem>();
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();

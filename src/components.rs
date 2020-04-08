@@ -13,7 +13,7 @@ pub struct Renderable {
     pub glyph: u8,
     pub fg: RGB,
     pub bg: RGB,
-    pub render_order: i32 //0..n 0 is first, while n is last
+    pub render_order: i32, //0..n 0 is first, while n is last
 }
 
 #[derive(Component, Debug)]
@@ -57,8 +57,8 @@ pub struct WantsToPickupItem {
 }
 
 #[derive(Component, Debug)]
-pub struct WantsToConsumeItem {
-    pub volt_pack: Entity,
+pub struct WantsToUseItem {
+    pub item: Entity,
 }
 
 #[derive(Component, Debug)]
@@ -70,8 +70,11 @@ pub struct WantsToDropItem {
 pub struct Item {}
 
 #[derive(Component, Debug)]
-pub struct Consumeable{
+pub struct Consumeable {}
 
+#[derive(Component, Debug)]
+pub struct ProvidesHealing {
+    pub heal_amount: i32,
 }
 
 #[derive(Component, Debug)]
