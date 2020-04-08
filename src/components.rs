@@ -13,6 +13,7 @@ pub struct Renderable {
     pub glyph: u8,
     pub fg: RGB,
     pub bg: RGB,
+    pub render_order: i32, //0..n 0 is first, while n is last
 }
 
 #[derive(Component, Debug)]
@@ -49,9 +50,67 @@ pub struct WantsToMelee {
     pub target: Entity,
 }
 
+#[derive(Component, Debug, Clone)]
+pub struct WantsToPickupItem {
+    pub collected_by: Entity,
+    pub item: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct WantsToUseItem {
+    pub item: Entity,
+    pub target: Option<rltk::Point>,
+}
+
+#[derive(Component, Debug)]
+pub struct WantsToDropItem {
+    pub item: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct Item {}
+
+#[derive(Component, Debug)]
+pub struct Consumeable {}
+
+#[derive(Component, Debug)]
+pub struct ProvidesHealing {
+    pub heal_amount: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct HPotion {
+    pub heal_amount: i32,
+}
+
 #[derive(Component, Debug)]
 pub struct SufferDamage {
     pub amount: Vec<i32>,
+}
+
+#[derive(Component, Debug)]
+pub struct InBackpack {
+    pub owner: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct Ranged {
+    pub range: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct AreaOfEffect {
+    pub radius: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct Disable {
+    pub turns: i32,
+}
+
+#[derive(Component, Debug)]
+pub struct InflictsDamage {
+    pub damage: i32,
 }
 
 impl SufferDamage {
