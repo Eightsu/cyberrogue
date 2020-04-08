@@ -104,6 +104,11 @@ pub struct AreaOfEffect {
 }
 
 #[derive(Component, Debug)]
+pub struct Force {
+    
+}
+
+#[derive(Component, Debug)]
 pub struct Disable {
     pub turns: i32,
 }

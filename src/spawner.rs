@@ -111,6 +111,7 @@ fn random_item(ecs: &mut World, x: i32, y: i32) {
         1 => volt_pack(ecs, x, y),
         2 => shockwave(ecs, x, y),
         3 => overload(ecs, x, y),
+        4 => force(ecs, x, y),
         _ => buster(ecs, x, y),
     }
 }
@@ -228,4 +229,22 @@ fn overload(ecs: &mut World, x: i32, y: i32) {
         .with(Ranged { range: 3 })
         .with(Disable { turns: 3 })
         .build();
+}
+
+fn force(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+    .with(Position{ x, y})
+    .with(Renderable {
+        glyph: rltk::to_cp437('☼'),
+        fg: RGB::named(rltk::WHITE),
+        bg: RGB::named(rltk::BLACK),
+        render_order: 2,
+    })
+    .with(Name{
+        name: "Force Chip".to_string(),
+    })
+    .with(Item{})
+    .with(Consumeable {})
+    .with(Ranged { range: 10})
+    .build();
 }

@@ -231,6 +231,8 @@ impl<'a> System<'a> for UseConsumableSystem {
                 }
             }
 
+            let item_moves = moving.get(useitem.item);
+
             let mut disable_affected = Vec::new();
 
             {
