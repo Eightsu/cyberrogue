@@ -11,8 +11,9 @@ use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
-use inventory_system::InventorySystem;
+use inventory_system::{InventorySystem, UseConsumableSystem};
 mod components;
+
 pub use components::*;
 mod map;
 pub use map::*;
@@ -30,6 +31,7 @@ pub enum RunState {
     PreRun,
     PlayerTurn,
     MonsterTurn,
+    ShowInventory,
 }
 
 pub struct State {
@@ -56,6 +58,9 @@ impl State {
         let mut pickup = InventorySystem {};
         pickup.run_now(&self.ecs);
 
+        let mut volt_packs = UseConsumableSystem {};
+        volt_packs.run_now(&self.ecs);
+
         self.ecs.maintain(); // MUST BE AT BOTTOM
     }
 }
@@ -76,6 +81,7 @@ impl GameState for State {
         match new_run_state {
             RunState::PreRun => {
                 self.run_systems();
+                self.ecs.maintain();
                 new_run_state = RunState::AwaitingInput;
             }
             RunState::AwaitingInput => {
@@ -83,11 +89,33 @@ impl GameState for State {
             }
             RunState::PlayerTurn => {
                 self.run_systems();
+                self.ecs.maintain();
                 new_run_state = RunState::MonsterTurn;
             }
             RunState::MonsterTurn => {
                 self.run_systems();
+                self.ecs.maintain();
                 new_run_state = RunState::AwaitingInput
+            }
+            RunState::ShowInventory => {
+                let result = gui::show_inventory(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => new_run_state = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.unwrap();
+                        let mut intent = self.ecs.write_storage::<WantsToConsumeItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToConsumeItem {
+                                    volt_pack: item_entity,
+                                },
+                            )
+                            .expect("Unable to insert intent");
+                        new_run_state = RunState::PlayerTurn;
+                    }
+                }
             }
         }
 
@@ -134,6 +162,7 @@ fn main() {
     gs.ecs.register::<Item>();
     gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<WantsToConsumeItem>();
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 

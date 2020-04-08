@@ -56,6 +56,11 @@ pub struct WantsToPickupItem {
 }
 
 #[derive(Component, Debug)]
+pub struct WantsToConsumeItem {
+    pub volt_pack: Entity,
+}
+
+#[derive(Component, Debug)]
 pub struct Item {}
 
 #[derive(Component, Debug)]
