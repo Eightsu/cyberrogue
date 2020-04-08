@@ -24,6 +24,7 @@ mod rect;
 mod spawner;
 pub use rect::Rect;
 mod gamelog;
+mod spawner;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -236,6 +237,7 @@ fn main() {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
+
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     // Generate Monsters
@@ -244,6 +246,8 @@ fn main() {
         spawner::spawn_room(&mut gs.ecs, room);
     }
 
+
+   
     gs.ecs.insert(player_entity);
     gs.ecs.insert(map); // resource
     gs.ecs.insert(Point::new(player_x, player_y));
