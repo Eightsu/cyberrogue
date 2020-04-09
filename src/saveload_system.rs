@@ -4,6 +4,7 @@ use specs::prelude::*;
 use specs::saveload::{
     DeserializeComponents, MarkedBuilder, SerializeComponents, SimpleMarker, SimpleMarkerAllocator,
 };
+use std::path::Path;
 use std::fs::File;
 use std::fs;
 
@@ -22,6 +23,10 @@ macro_rules! serialize_individually {
     )*
 
   };
+}
+
+pub fn does_save_exist() -> bool {
+    Path::new("./savegame.json").exists()
 }
 
 pub fn save_game(ecs: &mut World) {
