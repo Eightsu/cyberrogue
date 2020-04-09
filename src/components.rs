@@ -103,7 +103,6 @@ pub struct AreaOfEffect {
     pub radius: i32,
 }
 
-
 #[derive(Component, Debug)]
 pub struct Disable {
     pub turns: i32,

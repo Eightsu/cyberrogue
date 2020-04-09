@@ -231,7 +231,6 @@ impl<'a> System<'a> for UseConsumableSystem {
                 }
             }
 
-
             let mut disable_affected = Vec::new();
 
             {

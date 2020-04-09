@@ -229,4 +229,3 @@ fn overload(ecs: &mut World, x: i32, y: i32) {
         .with(Disable { turns: 3 })
         .build();
 }
-
