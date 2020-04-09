@@ -1,4 +1,4 @@
-use rltk::{Console, GameState, Point, Rltk};
+use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
 mod visibility_system;
 use visibility_system::VisibilitySystem;
@@ -252,12 +252,15 @@ impl GameState for State {
     }
 }
 
-fn main() {
+fn main() -> rltk::BError {
     use rltk::RltkBuilder;
-    let mut context = RltkBuilder::simple80x50().with_title("Mainframe").build();
+    let mut context = RltkBuilder::simple80x50()
+        .with_title("Main/Frame")
+        .build()?;
     context.with_post_scanlines(true);
-
-    let mut gs = State { ecs: World::new() };
+    let mut gs = State {
+        ecs: World::new()
+    };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
@@ -268,35 +271,33 @@ fn main() {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<SufferDamage>();
-    gs.ecs.register::<InflictsDamage>();
-    gs.ecs.register::<AreaOfEffect>();
-    gs.ecs.register::<Disable>();
-    gs.ecs.register::<Ranged>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<ProvidesHealing>();
+    gs.ecs.register::<InflictsDamage>();
+    gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<Consumeable>();
-    gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<Ranged>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToDropItem>();
-    let map: Map = Map::new_map_rooms_and_corridors();
+    gs.ecs.register::<Disable>();
+
+    let map : Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
-    // Generate Monsters
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room);
     }
 
-    gs.ecs.insert(player_entity);
-    gs.ecs.insert(map); // resource
+    gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
+    gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
-    gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["Welc0me to MainFrame".to_string()],
-    });
+    gs.ecs.insert(gamelog::GameLog{ entries : vec!["Welcome to MainFrame".to_string()] });
 
-    rltk::main_loop(context, gs);
+    rltk::main_loop(context,gs)
 }
