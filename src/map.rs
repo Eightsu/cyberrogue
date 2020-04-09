@@ -1,5 +1,6 @@
 use super::Rect;
-use rltk::{Algorithm2D, BaseMap,Point, RandomNumberGenerator, Rltk, RGB};
+use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, Rltk, RGB};
+use serde::{Deserialize, Serialize};
 use specs::prelude::*;
 use std::cmp::{max, min};
 
@@ -7,13 +8,13 @@ pub const MAPWIDTH: usize = 80;
 pub const MAPHEIGHT: usize = 43;
 pub const MAPCOUNT: usize = MAPWIDTH * MAPHEIGHT;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Serialize, Deserialize, Clone)]
 pub enum TileType {
     Wall,
     Floor,
 }
 
-#[derive(Default)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct Map {
     pub tiles: Vec<TileType>,
     pub rooms: Vec<Rect>,
@@ -22,6 +23,9 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+
+    #[serde(skip_serializing)]
+    #[serde(skip_deserializing)]
     pub tile_content: Vec<Vec<Entity>>,
 }
 
@@ -42,27 +46,42 @@ impl BaseMap for Map {
         rltk::DistanceAlg::Pythagoras.distance2d(p1, p2)
     }
 
-     fn get_available_exits(&self, idx:usize) -> rltk::SmallVec<[(usize, f32); 10]> {
+    fn get_available_exits(&self, idx: usize) -> rltk::SmallVec<[(usize, f32); 10]> {
         let mut exits = rltk::SmallVec::new();
         let x = idx as i32 % self.width;
         let y = idx as i32 / self.width;
         let w = self.width as usize;
 
         // Cardinal directions
-        if self.is_exit_valid(x-1, y) { exits.push((idx-1, 1.0)) };
-        if self.is_exit_valid(x+1, y) { exits.push((idx+1, 1.0)) };
-        if self.is_exit_valid(x, y-1) { exits.push((idx-w, 1.0)) };
-        if self.is_exit_valid(x, y+1) { exits.push((idx+w, 1.0)) };
+        if self.is_exit_valid(x - 1, y) {
+            exits.push((idx - 1, 1.0))
+        };
+        if self.is_exit_valid(x + 1, y) {
+            exits.push((idx + 1, 1.0))
+        };
+        if self.is_exit_valid(x, y - 1) {
+            exits.push((idx - w, 1.0))
+        };
+        if self.is_exit_valid(x, y + 1) {
+            exits.push((idx + w, 1.0))
+        };
 
         // Diagonals
-        if self.is_exit_valid(x-1, y-1) { exits.push(((idx-w)-1, 1.45)); }
-        if self.is_exit_valid(x+1, y-1) { exits.push(((idx-w)+1, 1.45)); }
-        if self.is_exit_valid(x-1, y+1) { exits.push(((idx+w)-1, 1.45)); }
-        if self.is_exit_valid(x+1, y+1) { exits.push(((idx+w)+1, 1.45)); }
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push(((idx - w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push(((idx - w) + 1, 1.45));
+        }
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push(((idx + w) - 1, 1.45));
+        }
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push(((idx + w) + 1, 1.45));
+        }
 
         exits
     }
-
 }
 
 impl Map {

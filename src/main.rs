@@ -1,5 +1,23 @@
+// EXTERNAL
 use rltk::{GameState, Point, Rltk};
+use serde;
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
+
+// INTERNAL
+mod components;
+pub use components::*;
+mod map;
+pub use map::*;
+mod player;
+use player::*;
+mod gui;
+mod rect;
+mod spawner;
+pub use rect::Rect;
+mod gamelog;
+
+// SYSTEMS
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 mod monster_ai_system;
@@ -12,18 +30,7 @@ mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
 use inventory_system::{InventorySystem, ItemDropSystem, UseConsumableSystem};
-mod components;
-
-pub use components::*;
-mod map;
-pub use map::*;
-mod player;
-use player::*;
-mod gui;
-mod rect;
-mod spawner;
-pub use rect::Rect;
-mod gamelog;
+mod saveload_system;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -40,7 +47,7 @@ pub enum RunState {
     MainMenu {
         menu_selection: gui::MainMenuSelection,
     },
-    SaveGame
+    SaveGame,
 }
 
 pub struct State {
@@ -222,7 +229,10 @@ impl GameState for State {
                 }
             }
             RunState::SaveGame => {
-                new_run_state = RunState::MainMenu{menu_selection: gui::MainMenuSelection::LoadGame }
+                saveload_system::save_game(&mut self.ecs);
+                new_run_state = RunState::MainMenu {
+                    menu_selection: gui::MainMenuSelection::LoadGame,
+                };
             }
         }
 
@@ -231,7 +241,6 @@ impl GameState for State {
             *runwriter = new_run_state;
         }
         damage_system::delete_the_dead(&mut self.ecs);
-
     }
 }
 
@@ -241,9 +250,7 @@ fn main() -> rltk::BError {
         .with_title("Main/Frame")
         .build()?;
     context.with_post_scanlines(true);
-    let mut gs = State {
-        ecs: World::new()
-    };
+    let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
@@ -265,8 +272,13 @@ fn main() -> rltk::BError {
     gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToDropItem>();
     gs.ecs.register::<Disable>();
+    gs.ecs.register::<SimpleMarker<SerializeMe>>();
+    gs.ecs.register::<SerializationHelper>();
 
-    let map : Map = Map::new_map_rooms_and_corridors();
+    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
+    // https://specs.amethyst.rs/docs/tutorials/13_saveload.html
+
+    let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
@@ -280,7 +292,9 @@ fn main() -> rltk::BError {
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
-    gs.ecs.insert(gamelog::GameLog{ entries : vec!["Welcome to MainFrame".to_string()] });
+    gs.ecs.insert(gamelog::GameLog {
+        entries: vec!["Welcome to MainFrame".to_string()],
+    });
 
-    rltk::main_loop(context,gs)
+    rltk::main_loop(context, gs)
 }

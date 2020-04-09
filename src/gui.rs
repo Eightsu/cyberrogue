@@ -2,7 +2,7 @@ use super::{
     gamelog::GameLog, CombatStats, InBackpack, Map, Name, Player, Position, RunState, State,
     Viewshed,
 };
-use rltk::{Console, Point, Rltk, VirtualKeyCode, RGB};
+use rltk::{Point, Rltk, VirtualKeyCode, RGB};
 use specs::prelude::*;
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
@@ -169,20 +169,20 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         y - 2,
         31,
         (count + 3) as i32,
-        RGB::named(rltk::WHITE),
+        RGB::named(rltk::GREEN),
         RGB::named(rltk::BLACK),
     );
     ctx.print_color(
         18,
         y - 2,
-        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::HOTPINK),
         RGB::named(rltk::BLACK),
         "Inventory",
     );
     ctx.print_color(
         18,
         y + count as i32 + 1,
-        RGB::named(rltk::YELLOW),
+        RGB::named(rltk::HOTPINK),
         RGB::named(rltk::BLACK),
         "esc to cancel.",
     );

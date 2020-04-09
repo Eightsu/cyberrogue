@@ -1,14 +1,43 @@
 use rltk::RGB;
+use serde::{Deserialize, Serialize};
+use specs::error::NoError;
 use specs::prelude::*;
+use specs::saveload::{ConvertSaveload, Marker};
 use specs_derive::*;
 
+// MARKER FOR SERIALIZATION(OBVIOUSLY)
 #[derive(Component)]
+pub struct SerializeMe {}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct SerializationHelper {
+    pub map: super::map::Map,
+}
+
+// IDS/TAGS
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct Monster {}
+
+#[derive(Component, Clone, Serialize, Deserialize)]
+pub struct Player {}
+
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct BlocksTile {}
+
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct Item {}
+
+#[derive(Component, Clone, Debug, Serialize, Deserialize)]
+pub struct Consumeable {}
+
+// Base
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
 }
 
-#[derive(Component)]
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct Renderable {
     pub glyph: rltk::FontCharType,
     pub fg: RGB,
@@ -16,28 +45,19 @@ pub struct Renderable {
     pub render_order: i32, //0..n 0 is first, while n is last
 }
 
-#[derive(Component, Debug)]
-pub struct Player {}
-
-#[derive(Component)]
+#[derive(Component, ConvertSaveload, Clone)]
 pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,
     pub range: i32,
     pub dirty: bool,
 }
 
-#[derive(Component)]
-pub struct Monster {}
-
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Name {
     pub name: String,
 }
 
-#[derive(Component, Debug)]
-pub struct BlocksTile {}
-
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct CombatStats {
     pub max_hp: i32,
     pub hp: i32,
@@ -45,72 +65,35 @@ pub struct CombatStats {
     pub power: i32,
 }
 
-#[derive(Component, Debug, Clone)]
-pub struct WantsToMelee {
-    pub target: Entity,
-}
-
-#[derive(Component, Debug, Clone)]
-pub struct WantsToPickupItem {
-    pub collected_by: Entity,
-    pub item: Entity,
-}
-
-#[derive(Component, Debug)]
-pub struct WantsToUseItem {
-    pub item: Entity,
-    pub target: Option<rltk::Point>,
-}
-
-#[derive(Component, Debug)]
-pub struct WantsToDropItem {
-    pub item: Entity,
-}
-
-#[derive(Component, Debug)]
-pub struct Item {}
-
-#[derive(Component, Debug)]
-pub struct Consumeable {}
-
-#[derive(Component, Debug)]
+// ITEM TYPE
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct ProvidesHealing {
     pub heal_amount: i32,
 }
 
-#[derive(Component, Debug)]
-pub struct HPotion {
-    pub heal_amount: i32,
-}
-
-#[derive(Component, Debug)]
-pub struct SufferDamage {
-    pub amount: Vec<i32>,
-}
-
-#[derive(Component, Debug)]
-pub struct InBackpack {
-    pub owner: Entity,
-}
-
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Ranged {
     pub range: i32,
 }
 
-#[derive(Component, Debug)]
-pub struct AreaOfEffect {
-    pub radius: i32,
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct InflictsDamage {
+    pub damage: i32,
 }
 
-#[derive(Component, Debug)]
+#[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Disable {
     pub turns: i32,
 }
 
-#[derive(Component, Debug)]
-pub struct InflictsDamage {
-    pub damage: i32,
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct AreaOfEffect {
+    pub radius: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct SufferDamage {
+    pub amount: Vec<i32>,
 }
 
 impl SufferDamage {
@@ -124,4 +107,33 @@ impl SufferDamage {
             store.insert(victim, dmg).expect("Unable to insert damage");
         }
     }
+}
+
+// ACTIONS
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct WantsToMelee {
+    pub target: Entity,
+}
+
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct WantsToPickupItem {
+    pub collected_by: Entity,
+    pub item: Entity,
+}
+
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct WantsToUseItem {
+    pub item: Entity,
+    pub target: Option<rltk::Point>,
+}
+
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct WantsToDropItem {
+    pub item: Entity,
+}
+
+// MISC
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct InBackpack {
+    pub owner: Entity,
 }

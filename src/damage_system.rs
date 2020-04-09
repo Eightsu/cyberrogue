@@ -17,7 +17,7 @@ impl<'a> System<'a> for DamageSystem {
             stats.hp -= damage.amount.iter().sum::<i32>();
         }
 
-        damage.clear(); 
+        damage.clear();
     }
 }
 pub fn delete_the_dead(ecs: &mut World) {
