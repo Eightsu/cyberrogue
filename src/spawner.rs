@@ -1,10 +1,14 @@
 
 use super::{
     AreaOfEffect, BlocksTile, CombatStats, Consumeable, Disable, InflictsDamage, Item, Monster,
-    Name, Player, Position, ProvidesHealing, Ranged, Rect, Renderable, Viewshed, MAPWIDTH,
+    Name, Player, Position, ProvidesHealing, Ranged, Rect, Renderable, SerializeMe, Viewshed,
+    MAPWIDTH,
 };
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
+use specs::saveload::{MarkedBuilder, SimpleMarker};
+
+// .marked::<SimpleMarker<SerializeMe>>() ADD TO ANYTHING YOU WANT SERIALIZED!
 
 pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
     ecs.create_entity()
@@ -33,6 +37,7 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             defense: 2,
             power: 10,
         })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
@@ -129,7 +134,7 @@ fn robot(ecs: &mut World, x: i32, y: i32) {
     monster(ecs, x, y, rltk::to_cp437('R'), "Robot");
 }
 
-fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
+fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharType, name: S) {
     ecs.create_entity()
         .with(Position { x, y })
         .with(Renderable {
@@ -154,6 +159,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: u8, name: S) {
             defense: 1,
             power: 4,
         })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -173,6 +179,7 @@ fn volt_pack(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumeable {})
         .with(ProvidesHealing { heal_amount: 10 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -193,6 +200,7 @@ fn buster(ecs: &mut World, x: i32, y: i32) {
         .with(Consumeable {})
         .with(Ranged { range: 8 })
         .with(InflictsDamage { damage: 12 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -214,6 +222,7 @@ fn shockwave(ecs: &mut World, x: i32, y: i32) {
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 5 })
         .with(AreaOfEffect { radius: 3 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -234,5 +243,6 @@ fn overload(ecs: &mut World, x: i32, y: i32) {
         .with(Consumeable {})
         .with(Ranged { range: 3 })
         .with(Disable { turns: 3 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }

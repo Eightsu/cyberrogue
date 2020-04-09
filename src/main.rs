@@ -1,5 +1,23 @@
-use rltk::{Console, GameState, Point, Rltk};
+// EXTERNAL
+extern crate serde;
+use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
+use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
+
+// INTERNAL
+mod components;
+pub use components::*;
+mod map;
+pub use map::*;
+mod player;
+use player::*;
+mod gui;
+mod rect;
+mod spawner;
+pub use rect::Rect;
+mod gamelog;
+
+// SYSTEMS
 mod visibility_system;
 use visibility_system::VisibilitySystem;
 mod monster_ai_system;
@@ -12,19 +30,11 @@ mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
 use inventory_system::{InventorySystem, ItemDropSystem, UseConsumableSystem};
+
+pub mod saveload_system;
+
 mod components;
 
-pub use components::*;
-mod map;
-pub use map::*;
-mod player;
-use player::*;
-mod gui;
-mod rect;
-mod spawner;
-pub use rect::Rect;
-mod gamelog;
-mod spawner;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -34,7 +44,14 @@ pub enum RunState {
     MonsterTurn,
     ShowInventory,
     ShowDropItem,
-    ShowTargeting { range: i32, item: Entity },
+    ShowTargeting {
+        range: i32,
+        item: Entity,
+    },
+    MainMenu {
+        menu_selection: gui::MainMenuSelection,
+    },
+    SaveGame,
 }
 
 pub struct State {
@@ -74,14 +91,36 @@ impl State {
 // RENDER LOOP
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
-        ctx.cls();
-
         let mut new_run_state;
-
         {
             let runstate = self.ecs.fetch::<RunState>();
             new_run_state = *runstate;
             // note - access data within mutable reference, instead of the ref itself.
+        }
+        ctx.cls();
+
+        match new_run_state {
+            RunState::MainMenu { .. } => {}
+            _ => {
+                draw_map(&self.ecs, ctx);
+
+                {
+                    let positions = self.ecs.read_storage::<Position>();
+                    let renderables = self.ecs.read_storage::<Renderable>();
+                    let map = self.ecs.fetch::<Map>();
+
+                    let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+                    data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+                    for (pos, render) in data.iter() {
+                        let idx = map.xy_idx(pos.x, pos.y);
+                        if map.visible_tiles[idx] {
+                            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph)
+                        }
+                    }
+
+                    gui::draw_ui(&self.ecs, ctx);
+                }
+            }
         }
 
         match new_run_state {
@@ -175,43 +214,50 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::MainMenu { .. } => {
+                let result = gui::main_menu(self, ctx);
+
+                match result {
+                    gui::MainMenuResult::NoSelection { selected } => {
+                        new_run_state = RunState::MainMenu {
+                            menu_selection: selected,
+                        }
+                    }
+                    gui::MainMenuResult::Selected { selected } => match selected {
+                        gui::MainMenuSelection::NewGame => new_run_state = RunState::PreRun,
+                        gui::MainMenuSelection::LoadGame => {
+                            saveload_system::load_game(&mut self.ecs);
+                            new_run_state = RunState::AwaitingInput;
+                            saveload_system::delete_save();
+                        }
+                        gui::MainMenuSelection::Quit => {
+                            ::std::process::exit(0);
+                        }
+                    },
+                }
+            }
+            RunState::SaveGame => {
+                saveload_system::save_game(&mut self.ecs);
+                new_run_state = RunState::MainMenu {
+                    menu_selection: gui::MainMenuSelection::Quit,
+                };
+            }
         }
 
         {
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = new_run_state;
         }
-
-        //let map = self.ecs.fetch::<Vec<TileType>>();
         damage_system::delete_the_dead(&mut self.ecs);
-        draw_map(&self.ecs, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let map = self.ecs.fetch::<Map>();
-
-        // https://specs.amethyst.rs/docs/tutorials/11_advanced_component.html?highlight=sort#sorting-entities-based-on-component-value
-        let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
-
-        data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-        // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/sorting.html
-
-        for (pos, render) in data.iter() {
-            let idx = map.xy_idx(pos.x, pos.y);
-            if map.visible_tiles[idx] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
-        }
-
-        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
-fn main() {
+fn main() -> rltk::BError {
     use rltk::RltkBuilder;
-    let mut context = RltkBuilder::simple80x50().with_title("Mainframe").build();
+    let mut context = RltkBuilder::simple80x50()
+        .with_title("Main/Frame")
+        .build()?;
     context.with_post_scanlines(true);
-
     let mut gs = State { ecs: World::new() };
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
@@ -223,38 +269,44 @@ fn main() {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<SufferDamage>();
-    gs.ecs.register::<InflictsDamage>();
-    gs.ecs.register::<AreaOfEffect>();
-    gs.ecs.register::<Disable>();
-    gs.ecs.register::<Ranged>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<ProvidesHealing>();
+    gs.ecs.register::<InflictsDamage>();
+    gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<Consumeable>();
-    gs.ecs.register::<WantsToPickupItem>();
+    gs.ecs.register::<Ranged>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToDropItem>();
+    gs.ecs.register::<Disable>();
+    gs.ecs.register::<SimpleMarker<SerializeMe>>();
+    gs.ecs.register::<SerializationHelper>();
+
+    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
+    // https://specs.amethyst.rs/docs/tutorials/13_saveload.html
+
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
 
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
-    // Generate Monsters
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     for room in map.rooms.iter().skip(1) {
         spawner::spawn_room(&mut gs.ecs, room);
     }
 
+    gs.ecs.insert(map);
 
-   
-    gs.ecs.insert(player_entity);
-    gs.ecs.insert(map); // resource
     gs.ecs.insert(Point::new(player_x, player_y));
-    gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(player_entity);
+    gs.ecs.insert(RunState::MainMenu{
+        menu_selection: gui::MainMenuSelection::NewGame
+    }); // add START MENU
     gs.ecs.insert(gamelog::GameLog {
-        entries: vec!["Welc0me to MainFrame".to_string()],
+        entries: vec!["Welcome to MainFrame".to_string()],
     });
 
-    rltk::main_loop(context, gs);
+    rltk::main_loop(context, gs)
 }
