@@ -89,6 +89,8 @@ impl<'a> System<'a> for ItemDropSystem {
                 )
                 .expect("unable to render position");
 
+            backpack.remove(dropped_item.item);
+
             if entity == *player_entity {
                 gamelog.entries.push(format!(
                     "You drop the {}.",
@@ -212,22 +214,6 @@ impl<'a> System<'a> for UseConsumableSystem {
 
                         used_item = true;
                     }
-
-                    // used_item = false;
-                    // let target_point = useitem.target.unwrap();
-                    // let idx = map.xy_idx(target_point.x,target_point.y);
-
-                    // for enemy in map.tile_content[idx].iter() {
-                    //     SufferDamage::new_damage(&mut suffer_damage, *enemy, damage.damage);
-                    //     if entity == *player_entity {
-                    //         let enemy_name = names.get(*enemy).unwrap();
-                    //         let item_name = names.get(useitem.item).unwrap();
-
-                    //         gamelog.entries.push(format!("You charged your {}, and shot the {}, inflicting {} damage", item_name.name, enemy_name.name, damage.damage));
-                    //     }
-
-                    //     used_item = true;
-                    // }
                 }
             }
 
@@ -262,19 +248,14 @@ impl<'a> System<'a> for UseConsumableSystem {
                     .expect("Unable to inflic disable");
             }
             // if consumeable, then delete.
-            let consumeable = consumables.get(useitem.item);
-            match consumeable {
-                None => {}
-                Some(_) => {
-                    // stats.hp = i32::min(stats.max_hp, stats.hp + potion.heal_amount);
-                    // if entity == *player_entity {
-                    //     gamelog.entries.push(format!(
-                    //         "You useitem the {}, healing {} hp.",
-                    //         names.get(useitem.item).unwrap().name,
-                    //         potion.heal_amount
-                    //     ));
-                    // }
-                    entities.delete(useitem.item).expect("Delete failed");
+
+            if used_item {
+                let consumeable = consumables.get(useitem.item);
+                match consumeable {
+                    None => {}
+                    Some(_) => {
+                        entities.delete(useitem.item).expect("Delete failed");
+                    }
                 }
             }
         }

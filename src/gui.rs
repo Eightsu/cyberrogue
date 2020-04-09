@@ -491,7 +491,7 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
                     }
                     return MainMenuResult::NoSelection {
                         selected: newselection,
-                    }
+                    };
                 }
                 VirtualKeyCode::Down => {
                     let mut newselection;

@@ -282,7 +282,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
     // https://specs.amethyst.rs/docs/tutorials/13_saveload.html
 
-    let map: Map = Map::new_map_rooms_and_corridors();
+    let map: Map = Map::new_map_rooms_and_corridors(1);
     let (player_x, player_y) = map.rooms[0].center();
 
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
@@ -295,8 +295,8 @@ fn main() -> rltk::BError {
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
-    gs.ecs.insert(RunState::MainMenu{
-        menu_selection: gui::MainMenuSelection::NewGame
+    gs.ecs.insert(RunState::MainMenu {
+        menu_selection: gui::MainMenuSelection::NewGame,
     }); // add START MENU
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MainFrame".to_string()],
