@@ -1,4 +1,4 @@
 /target
 mainframe-rust-game.code-workspace
 ./.DS_Store
-src/savegame.json
+savegame.json
