@@ -30,7 +30,11 @@ mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
 use inventory_system::{InventorySystem, ItemDropSystem, UseConsumableSystem};
+
 pub mod saveload_system;
+
+mod components;
+
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -285,6 +289,7 @@ fn main() -> rltk::BError {
     let map: Map = Map::new_map_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
+
     let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
@@ -293,6 +298,7 @@ fn main() -> rltk::BError {
     }
 
     gs.ecs.insert(map);
+
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::MainMenu{
