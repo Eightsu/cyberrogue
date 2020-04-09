@@ -40,6 +40,7 @@ pub enum RunState {
     MainMenu {
         menu_selection: gui::MainMenuSelection,
     },
+    SaveGame
 }
 
 pub struct State {
@@ -220,35 +221,17 @@ impl GameState for State {
                     },
                 }
             }
+            RunState::SaveGame => {
+                new_run_state = RunState::MainMenu{menu_selection: gui::MainMenuSelection::LoadGame }
+            }
         }
 
         {
             let mut runwriter = self.ecs.write_resource::<RunState>();
             *runwriter = new_run_state;
         }
-
-        //let map = self.ecs.fetch::<Vec<TileType>>();
         damage_system::delete_the_dead(&mut self.ecs);
-        draw_map(&self.ecs, ctx);
 
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let map = self.ecs.fetch::<Map>();
-
-        // https://specs.amethyst.rs/docs/tutorials/11_advanced_component.html?highlight=sort#sorting-entities-based-on-component-value
-        let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
-
-        data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-        // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/sorting.html
-
-        for (pos, render) in data.iter() {
-            let idx = map.xy_idx(pos.x, pos.y);
-            if map.visible_tiles[idx] {
-                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
-            }
-        }
-
-        gui::draw_ui(&self.ecs, ctx);
     }
 }
 

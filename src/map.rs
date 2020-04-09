@@ -191,7 +191,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 }
             }
             if !map.visible_tiles[idx] {
-                fg = fg.to_greyscale()
+                fg = fg.to_greyscale();
             }
             ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
         }

@@ -175,14 +175,14 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     ctx.print_color(
         18,
         y - 2,
-        RGB::named(rltk::HOTPINK),
+        RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
         "Inventory",
     );
     ctx.print_color(
         18,
         y + count as i32 + 1,
-        RGB::named(rltk::HOTPINK),
+        RGB::named(rltk::YELLOW),
         RGB::named(rltk::BLACK),
         "esc to cancel.",
     );
@@ -206,7 +206,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             y,
             RGB::named(rltk::HOTPINK),
             RGB::named(rltk::BLACK),
-            97 + j as u8,
+            97 + j as rltk::FontCharType,
         );
         ctx.set(
             19,
@@ -418,14 +418,14 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
     {
         if selection == MainMenuSelection::NewGame {
             ctx.print_color_centered(
-                24,
+                20,
                 RGB::named(rltk::MAGENTA),
                 RGB::named(rltk::BLACK),
                 "Begin New Game",
             ); // IF FOCUSED ON HIGHLIGHT
         } else {
             ctx.print_color_centered(
-                24,
+                20,
                 RGB::named(rltk::WHITE),
                 RGB::named(rltk::BLACK),
                 "Begin New Game",
@@ -434,14 +434,14 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
 
         if selection == MainMenuSelection::LoadGame {
             ctx.print_color_centered(
-                24,
+                25,
                 RGB::named(rltk::MAGENTA),
                 RGB::named(rltk::BLACK),
                 "Load Game",
             ); // IF FOCUSED ON HIGHLIGHT
         } else {
             ctx.print_color_centered(
-                24,
+                25,
                 RGB::named(rltk::WHITE),
                 RGB::named(rltk::BLACK),
                 "Load Game",
@@ -450,14 +450,14 @@ pub fn main_menu(gs: &mut State, ctx: &mut Rltk) -> MainMenuResult {
 
         if selection == MainMenuSelection::Quit {
             ctx.print_color_centered(
-                24,
+                30,
                 RGB::named(rltk::MAGENTA),
                 RGB::named(rltk::BLACK),
                 "End Session",
             ); // IF FOCUSED ON HIGHLIGHT
         } else {
             ctx.print_color_centered(
-                24,
+                30,
                 RGB::named(rltk::WHITE),
                 RGB::named(rltk::BLACK),
                 "End Session",
