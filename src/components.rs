@@ -5,32 +5,6 @@ use specs::prelude::*;
 use specs::saveload::{ConvertSaveload, Marker};
 use specs_derive::*;
 
-// MARKER FOR SERIALIZATION(OBVIOUSLY)
-#[derive(Component)]
-pub struct SerializeMe {}
-
-#[derive(Component, Serialize, Deserialize, Clone)]
-pub struct SerializationHelper {
-    pub map: super::map::Map,
-}
-
-// IDS/TAGS
-#[derive(Component, Clone, Debug, Serialize, Deserialize)]
-pub struct Monster {}
-
-#[derive(Component, Clone, Serialize, Deserialize)]
-pub struct Player {}
-
-#[derive(Component, Clone, Debug, Serialize, Deserialize)]
-pub struct BlocksTile {}
-
-#[derive(Component, Clone, Debug, Serialize, Deserialize)]
-pub struct Item {}
-
-#[derive(Component, Clone, Debug, Serialize, Deserialize)]
-pub struct Consumeable {}
-
-// Base
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct Position {
     pub x: i32,
@@ -42,8 +16,11 @@ pub struct Renderable {
     pub glyph: rltk::FontCharType,
     pub fg: RGB,
     pub bg: RGB,
-    pub render_order: i32, //0..n 0 is first, while n is last
+    pub render_order: i32,
 }
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Player {}
 
 #[derive(Component, ConvertSaveload, Clone)]
 pub struct Viewshed {
@@ -52,10 +29,16 @@ pub struct Viewshed {
     pub dirty: bool,
 }
 
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Monster {}
+
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct Name {
     pub name: String,
 }
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct BlocksTile {}
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
 pub struct CombatStats {
@@ -65,30 +48,9 @@ pub struct CombatStats {
     pub power: i32,
 }
 
-// ITEM TYPE
 #[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct ProvidesHealing {
-    pub heal_amount: i32,
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct Ranged {
-    pub range: i32,
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct InflictsDamage {
-    pub damage: i32,
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct Disable {
-    pub turns: i32,
-}
-
-#[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct AreaOfEffect {
-    pub radius: i32,
+pub struct WantsToMelee {
+    pub target: Entity,
 }
 
 #[derive(Component, Debug, ConvertSaveload, Clone)]
@@ -109,10 +71,40 @@ impl SufferDamage {
     }
 }
 
-// ACTIONS
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Item {}
+
+#[derive(Component, Debug, Serialize, Deserialize, Clone)]
+pub struct Consumeable {}
+
 #[derive(Component, Debug, ConvertSaveload, Clone)]
-pub struct WantsToMelee {
-    pub target: Entity,
+pub struct Ranged {
+    pub range: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct InflictsDamage {
+    pub damage: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct AreaOfEffect {
+    pub radius: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct Disable {
+    pub turns: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload, Clone)]
+pub struct ProvidesHealing {
+    pub heal_amount: i32,
+}
+
+#[derive(Component, Debug, ConvertSaveload)]
+pub struct InBackpack {
+    pub owner: Entity,
 }
 
 #[derive(Component, Debug, ConvertSaveload)]
@@ -132,8 +124,13 @@ pub struct WantsToDropItem {
     pub item: Entity,
 }
 
-// MISC
-#[derive(Component, Debug, ConvertSaveload)]
-pub struct InBackpack {
-    pub owner: Entity,
+// Serialization helper code. We need to implement ConvertSaveload for each type that contains an
+// Entity.
+
+pub struct SerializeMe;
+
+// Special component that exists to help serialize the game data
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct SerializationHelper {
+    pub map: super::map::Map,
 }

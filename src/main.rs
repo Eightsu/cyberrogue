@@ -1,6 +1,6 @@
 // EXTERNAL
+extern crate serde;
 use rltk::{GameState, Point, Rltk};
-use serde;
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
 
@@ -30,7 +30,7 @@ mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
 use inventory_system::{InventorySystem, ItemDropSystem, UseConsumableSystem};
-mod saveload_system;
+pub mod saveload_system;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState {
@@ -221,7 +221,11 @@ impl GameState for State {
                     }
                     gui::MainMenuResult::Selected { selected } => match selected {
                         gui::MainMenuSelection::NewGame => new_run_state = RunState::PreRun,
-                        gui::MainMenuSelection::LoadGame => new_run_state = RunState::PreRun,
+                        gui::MainMenuSelection::LoadGame => {
+                            saveload_system::load_game(&mut self.ecs);
+                            new_run_state = RunState::AwaitingInput;
+                            saveload_system::delete_save();
+                        }
                         gui::MainMenuSelection::Quit => {
                             ::std::process::exit(0);
                         }
@@ -231,7 +235,7 @@ impl GameState for State {
             RunState::SaveGame => {
                 saveload_system::save_game(&mut self.ecs);
                 new_run_state = RunState::MainMenu {
-                    menu_selection: gui::MainMenuSelection::LoadGame,
+                    menu_selection: gui::MainMenuSelection::Quit,
                 };
             }
         }
@@ -291,7 +295,9 @@ fn main() -> rltk::BError {
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
-    gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(RunState::MainMenu{
+        menu_selection: gui::MainMenuSelection::NewGame
+    }); // add START MENU
     gs.ecs.insert(gamelog::GameLog {
         entries: vec!["Welcome to MainFrame".to_string()],
     });
