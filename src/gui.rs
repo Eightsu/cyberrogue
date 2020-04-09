@@ -36,9 +36,13 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
             stats.hp,
             stats.max_hp,
             RGB::named(rltk::DARK_TURQUOISE),
-            RGB::named(rltk::BLACK),
+            RGB::named(rltk::WHITE),
         );
     }
+
+    let map = ecs.fetch::<Map>();
+    let depth = format!("LEVEL:{}", map.depth);
+    ctx.print_color(2, 43, RGB::named(rltk::DEEP_PINK), RGB::named(rltk::BLACK), &depth);
 
     let log = ecs.fetch::<GameLog>();
     let mut y = 44;
