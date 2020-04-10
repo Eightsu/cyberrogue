@@ -383,6 +383,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<SerializationHelper>();
     gs.ecs.register::<Equippable>();
     gs.ecs.register::<Equipped>();
+    gs.ecs.register::<AtkBonus>();
+    gs.ecs.register::<DefBonus>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
     // https://specs.amethyst.rs/docs/tutorials/13_saveload.html
