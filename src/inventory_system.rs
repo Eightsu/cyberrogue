@@ -238,6 +238,7 @@ impl<'a> System<'a> for UseConsumableSystem {
                                     item_name.name, enemy_name.name
                                 ))
                             }
+                            used_item = true;
                         }
                     }
                 }

@@ -1,10 +1,25 @@
 use super::{
-    gamelog::GameLog, CombatStats, Item, Map, Player, Position, RunState, State, Viewshed,
-    WantsToMelee, WantsToPickupItem,
+    gamelog::GameLog, CombatStats, Item, Map, Player, Position, RunState, State, TileType,
+    Viewshed, WantsToMelee, WantsToPickupItem,Monster
 };
+
 use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use std::cmp::{max, min};
+
+pub fn try_next_level(ecs: &mut World) -> bool {
+    let player_pos = ecs.fetch::<Point>();
+    let map = ecs.fetch::<Map>();
+    let played_idx = map.xy_idx(player_pos.x, player_pos.y);
+
+    if map.tiles[played_idx] == TileType::Downstairs {
+        true
+    } else {
+        let mut gamelog = ecs.fetch_mut::<GameLog>();
+        gamelog.entries.push("Not possible.".to_string());
+        false
+    }
+}
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut positions = ecs.write_storage::<Position>();
@@ -58,6 +73,14 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
         None => return RunState::AwaitingInput,
         Some(key) => match key {
+            VirtualKeyCode::Period => {
+                if try_next_level(&mut gs.ecs) {
+                    return RunState::NextLevel;
+                }
+            }
+            VirtualKeyCode::Numpad5 | VirtualKeyCode::Space => {
+                return skip_turn(&mut gs.ecs);
+            }
             VirtualKeyCode::Escape => return RunState::SaveGame,
             VirtualKeyCode::D => return RunState::ShowDropItem,
             VirtualKeyCode::I => return RunState::ShowInventory,
@@ -127,4 +150,41 @@ fn get_item(ecs: &mut World) {
                 .expect("Unable to pick up...");
         }
     }
+}
+
+fn skip_turn(ecs: &mut World) -> RunState {
+    let player_entity = ecs.fetch::<Entity>();
+    let viewshed = ecs.read_storage::<Viewshed>();
+    let enemies = ecs.read_storage::<Monster>();
+
+    let world_map = ecs.fetch::<Map>();
+
+    let mut can_heal = true;
+
+    let view = viewshed.get(*player_entity).unwrap();
+
+    for tile in view.visible_tiles.iter(){
+        let idx = world_map.xy_idx(tile.x, tile.y );
+
+        for entity_id in world_map.tile_content[idx].iter(){
+            let enemy_group = enemies.get(*entity_id);
+
+            match enemy_group {
+                None => {}
+                Some(_) => {can_heal = false}
+            }
+        }
+    }
+
+    if can_heal {
+        let mut health = ecs.write_storage::<CombatStats>();
+        let mut gamelog = ecs.fetch_mut::<GameLog>();
+        gamelog.entries.push("Recharging Battery...".to_string());
+
+        let player_health = health.get_mut(*player_entity).unwrap();
+
+        player_health.hp = i32::min(player_health.hp + 1, player_health.max_hp );
+    }
+
+    RunState::PlayerTurn
 }
