@@ -2,6 +2,7 @@ use super::{
     rand_table::RandomTable, AreaOfEffect, BlocksTile, CombatStats, Consumeable, Disable,
     InflictsDamage, Item, Monster, Name, Player, Position, ProvidesHealing, Ranged, Rect,
     Renderable, SerializeMe, Viewshed, MAPWIDTH,
+    Equippable, EquipmentSlot
 };
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -44,6 +45,19 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
 const MAX_MONSTERS: i32 = 4;
 // const MAX_ITEMS: i32 = 2;
 
+fn room_table(map_depth: i32) -> RandomTable {
+    // HIGHER NUMBER MEANS HIGHER CHANCE OF SPAWNING
+    RandomTable::new()
+        .add("Android", 1 + map_depth)
+        .add("Robot", 9)
+        .add("volt_pack", i32::min(1, 4 + (map_depth - 5))) // no health packs on the first level 
+        .add("buster", 4)
+        .add("shockwave", 1 + map_depth )
+        .add("overload", 1 + (map_depth - 4))
+        .add("powerglove", 9)
+        .add("shield+", 9)
+}
+
 #[allow(clippy::map_entry)]
 pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32 ) {
     let mut spawn_table = room_table(map_depth);
@@ -82,6 +96,8 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32 ) {
             "buster" => buster(ecs, x, y),
             "shockwave" => shockwave(ecs, x, y),
             "overload" => overload(ecs, x, y),
+            "powerglove" => powerglove(ecs, x, y),
+            "shield+" => shieldplus(ecs, x, y),
             _ => {}
 
         }
@@ -123,6 +139,8 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
+
+// ITEMS / SKILLS
 
 // HEAL
 fn volt_pack(ecs: &mut World, x: i32, y: i32) {
@@ -208,13 +226,41 @@ fn overload(ecs: &mut World, x: i32, y: i32) {
         .build();
 }
 
-fn room_table(map_depth: i32) -> RandomTable {
-    // HIGHER NUMBER MEANS HIGHER CHANCE OF SPAWNING
-    RandomTable::new()
-        .add("Android", 1 + map_depth)
-        .add("Robot", 9)
-        .add("volt_pack", i32::min(1, 4 + (map_depth - 5))) // no health packs on the first level 
-        .add("buster", 4)
-        .add("shockwave", 1 + map_depth )
-        .add("overload", 1 + (map_depth - 4))
+// EQUIPS
+
+fn powerglove(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+    .with(Position{x,y,})
+    .with(Renderable {
+        glyph: rltk::to_cp437('B'),
+        fg: RGB::named(rltk::YELLOW),
+        bg: RGB::named(rltk::BLACK),
+        render_order: 2
+    })
+    .with(Name {
+        name: "Powerglove".to_string()
+    })
+    .with(Item{})
+    .with(Equippable{ slot: EquipmentSlot::Melee})
+    .marked::<SimpleMarker<SerializeMe>>()
+    .build();
 }
+
+fn shieldplus(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+    .with(Position{x,y,})
+    .with(Renderable {
+        glyph: rltk::to_cp437('O'),
+        fg: RGB::named(rltk::YELLOW),
+        bg: RGB::named(rltk::BLACK),
+        render_order: 2
+    })
+    .with(Name {
+        name: "Shield+".to_string()
+    })
+    .with(Item{})
+    .with(Equippable{ slot: EquipmentSlot::Shield})
+    .marked::<SimpleMarker<SerializeMe>>()
+    .build();
+}
+

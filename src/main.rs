@@ -30,7 +30,7 @@ use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
-use inventory_system::{InventorySystem, ItemDropSystem, UseConsumableSystem};
+use inventory_system::{InventorySystem, ItemDropSystem, ItemUseSystem};
 pub mod saveload_system;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -76,7 +76,7 @@ impl State {
         let mut pickup = InventorySystem {};
         pickup.run_now(&self.ecs);
 
-        let mut volt_packs = UseConsumableSystem {};
+        let mut volt_packs = ItemUseSystem {};
         volt_packs.run_now(&self.ecs);
 
         let mut drop_items = ItemDropSystem {};
@@ -261,6 +261,7 @@ impl State {
         let player = self.ecs.read_storage::<Player>();
         let backpack = self.ecs.read_storage::<InBackpack>();
         let player_entity = self.ecs.fetch::<Entity>();
+        let equipped = self.ecs.read_storage::<Equipped>();
 
         let mut to_delete: Vec<Entity> = Vec::new();
 
@@ -276,6 +277,14 @@ impl State {
             let bag = backpack.get(entity);
             if let Some(bag) = bag {
                 if bag.owner == *player_entity {
+                    should_delete = false;
+                }
+            }
+
+            let equips = equipped.get(entity);
+
+            if let Some(equips) = equips {
+                if equips.owner == *player_entity {
                     should_delete = false;
                 }
             }
@@ -372,6 +381,8 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Disable>();
     gs.ecs.register::<SimpleMarker<SerializeMe>>();
     gs.ecs.register::<SerializationHelper>();
+    gs.ecs.register::<Equippable>();
+    gs.ecs.register::<Equipped>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
     // https://specs.amethyst.rs/docs/tutorials/13_saveload.html

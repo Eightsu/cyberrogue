@@ -1,7 +1,7 @@
 use super::{
     gamelog::GameLog, AreaOfEffect, CombatStats, Consumeable, Disable, InBackpack, InflictsDamage,
     Map, Name, Position, ProvidesHealing, SufferDamage, WantsToDropItem, WantsToPickupItem,
-    WantsToUseItem,
+    WantsToUseItem,Equippable, Equipped
 };
 use specs::prelude::*;
 
@@ -102,9 +102,9 @@ impl<'a> System<'a> for ItemDropSystem {
     }
 }
 
-pub struct UseConsumableSystem {}
+pub struct ItemUseSystem {}
 
-impl<'a> System<'a> for UseConsumableSystem {
+impl<'a> System<'a> for ItemUseSystem {
     #[allow(clippy::type_complexity)]
     type SystemData = (
         ReadExpect<'a, Entity>,
@@ -120,8 +120,12 @@ impl<'a> System<'a> for UseConsumableSystem {
         ReadStorage<'a, AreaOfEffect>,
         WriteStorage<'a, Disable>,
         WriteStorage<'a, CombatStats>,
+        ReadStorage<'a, Equippable>,
+        WriteStorage<'a, Equipped>,
+        WriteStorage<'a, InBackpack>,
     );
 
+    #[allow(clippy::cognitive_complexity)]
     fn run(&mut self, data: Self::SystemData) {
         let (
             player_entity,
@@ -137,6 +141,9 @@ impl<'a> System<'a> for UseConsumableSystem {
             aoe,
             mut inflict_disable,
             mut combat_stats,
+            equippable,
+            mut equipped,
+            mut backpack
         ) = data;
 
         for (entity, useitem) in (&entities, &wants_to_use).join() {
@@ -170,6 +177,43 @@ impl<'a> System<'a> for UseConsumableSystem {
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            // check if equippable
+            let item_equippable = equippable.get(useitem.item);
+            match item_equippable {
+                None => {}
+                Some (can_equip) => {
+                    let target_slot = can_equip.slot;
+                    let target = targets[0];
+
+                    // if item already in slot
+                    let mut unequip : Vec<Entity> = Vec::new();
+
+                    // check slot
+                    for(item_entity, already_equipped, name) in (&entities, &equipped, &names).join(){
+                        if already_equipped.owner == target && already_equipped.slot == target_slot {
+                            unequip.push(item_entity);
+
+                            if target == *player_entity {
+                                gamelog.entries.push(format!("Unequipping {}...", name.name));
+                            }
+                        }
+                    }
+                    // remove item from slot, and place in backpack
+                    for item in unequip.iter(){
+                        equipped.remove(*item);
+                        backpack.insert(*item, InBackpack{owner: target}).expect("unable to put item in backpack");
+                    }
+
+                    // finally equip the item
+                    equipped.insert(useitem.item, Equipped{ owner: target, slot: target_slot}).expect("unable to equip item");
+                    // remove from backpack
+                    backpack.remove(useitem.item);
+                    if target == *player_entity {
+                        gamelog.entries.push(format!("Equipping {}...", names.get(useitem.item).unwrap().name))
                     }
                 }
             }
