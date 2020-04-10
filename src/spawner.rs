@@ -1,8 +1,7 @@
 use super::{
-    rand_table::RandomTable, AreaOfEffect, BlocksTile, CombatStats, Consumeable, Disable,
-    InflictsDamage, Item, Monster, Name, Player, Position, ProvidesHealing, Ranged, Rect,
-    Renderable, SerializeMe, Viewshed, MAPWIDTH,
-    Equippable, EquipmentSlot, AtkBonus, DefBonus
+    rand_table::RandomTable, AreaOfEffect, AtkBonus, BlocksTile, CombatStats, Consumeable,
+    DefBonus, Disable, EquipmentSlot, Equippable, InflictsDamage, Item, Monster, Name, Player,
+    Position, ProvidesHealing, Ranged, Rect, Renderable, SerializeMe, Viewshed, MAPWIDTH,
 };
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -50,16 +49,16 @@ fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("Android", 1 + map_depth)
         .add("Robot", 9)
-        .add("volt_pack", i32::min(1, 4 + (map_depth - 5))) // no health packs on the first level 
+        .add("volt_pack", i32::min(1, 4 + (map_depth - 5))) // no health packs on the first level
         .add("buster", 4)
-        .add("shockwave", 1 + map_depth )
+        .add("shockwave", 1 + map_depth)
         .add("overload", 1 + (map_depth - 4))
         .add("powerglove", 9)
         .add("shield+", 9)
 }
 
 #[allow(clippy::map_entry)]
-pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32 ) {
+pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
     let mut spawn_table = room_table(map_depth);
     let mut spawn_points: HashMap<usize, String> = HashMap::new();
 
@@ -99,7 +98,6 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32 ) {
             "powerglove" => powerglove(ecs, x, y),
             "shield+" => shieldplus(ecs, x, y),
             _ => {}
-
         }
     }
 }
@@ -230,43 +228,85 @@ fn overload(ecs: &mut World, x: i32, y: i32) {
 
 fn powerglove(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
-    .with(Position{x,y,})
-    .with(Renderable {
-        glyph: rltk::to_cp437('B'),
-        fg: RGB::named(rltk::YELLOW),
-        bg: RGB::named(rltk::BLACK),
-        render_order: 2
-    })
-    .with(Name {
-        name: "Powerglove".to_string()
-    })
-    .with(Item{})
-    .with(AtkBonus{
-        amount: 50
-    })
-    .with(Equippable{ slot: EquipmentSlot::Melee})
-    .marked::<SimpleMarker<SerializeMe>>()
-    .build();
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('B'),
+            fg: RGB::named(rltk::YELLOW),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Powerglove".to_string(),
+        })
+        .with(Item {})
+        .with(AtkBonus { amount: 50 })
+        .with(Equippable {
+            slot: EquipmentSlot::Melee,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
 }
 
 fn shieldplus(ecs: &mut World, x: i32, y: i32) {
     ecs.create_entity()
-    .with(Position{x,y,})
-    .with(Renderable {
-        glyph: rltk::to_cp437('O'),
-        fg: RGB::named(rltk::YELLOW),
-        bg: RGB::named(rltk::BLACK),
-        render_order: 2
-    })
-    .with(Name {
-        name: "Shield+".to_string()
-    })
-    .with(Item{})
-    .with(DefBonus{ 
-        amount: 20
-    })
-    .with(Equippable{ slot: EquipmentSlot::Shield})
-    .marked::<SimpleMarker<SerializeMe>>()
-    .build();
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('O'),
+            fg: RGB::named(rltk::YELLOW),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Shield+".to_string(),
+        })
+        .with(Item {})
+        .with(DefBonus { amount: 20 })
+        .with(Equippable {
+            slot: EquipmentSlot::Shield,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
 }
 
+fn lightblade(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('|'),
+            fg: RGB::named(rltk::YELLOW),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "LIGHTSWORD".to_string(),
+        })
+        .with(Item {})
+        .with(AtkBonus { amount: 20 })
+        .with(DefBonus { amount: 5 })
+        .with(Equippable {
+            slot: EquipmentSlot::Melee,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}
+
+fn energyshield(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('O'),
+            fg: RGB::named(rltk::ORANGE),
+            bg: RGB::named(rltk::BLACK),
+            render_order: 2,
+        })
+        .with(Name {
+            name: "Energy Shield".to_string(),
+        })
+        .with(Item {})
+        .with(DefBonus { amount: 15 })
+        .with(Equippable {
+            slot: EquipmentSlot::Shield,
+        })
+        .marked::<SimpleMarker<SerializeMe>>()
+        .build();
+}

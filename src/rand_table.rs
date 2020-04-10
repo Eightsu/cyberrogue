@@ -29,14 +29,15 @@ impl RandomTable {
     }
 
     pub fn add<S: ToString>(mut self, name: S, weight: i32) -> RandomTable {
-        self.total_weight += weight;
-        self.entries
-            .push(RandomEntry::new(name.to_string(), weight));
+        if weight > 0 {
+            self.total_weight += weight;
+            self.entries
+                .push(RandomEntry::new(name.to_string(), weight));
+        }
         self // just return self
     }
 
-    pub fn roll(&self, rng: &mut RandomNumberGenerator) -> String 
-    {
+    pub fn roll(&self, rng: &mut RandomNumberGenerator) -> String {
         if self.total_weight == 0 {
             return "None".to_string();
         }
@@ -54,5 +55,5 @@ impl RandomTable {
             index += 1;
         }
         return "None".to_string();
-      }
+    }
 }

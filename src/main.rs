@@ -30,7 +30,7 @@ use melee_combat_system::MeleeCombatSystem;
 mod damage_system;
 use damage_system::DamageSystem;
 mod inventory_system;
-use inventory_system::{InventorySystem, ItemDropSystem, ItemUseSystem};
+use inventory_system::{InventorySystem, ItemDropSystem, ItemRemoveSystem, ItemUseSystem};
 pub mod saveload_system;
 
 #[derive(PartialEq, Copy, Clone)]
@@ -40,6 +40,7 @@ pub enum RunState {
     PlayerTurn,
     MonsterTurn,
     ShowInventory,
+    ShowRemoveItem,
     ShowDropItem,
     ShowTargeting {
         range: i32,
@@ -50,6 +51,7 @@ pub enum RunState {
     },
     SaveGame,
     NextLevel,
+    GameOver,
 }
 
 pub struct State {
@@ -81,6 +83,9 @@ impl State {
 
         let mut drop_items = ItemDropSystem {};
         drop_items.run_now(&self.ecs);
+
+        let mut remove_items = ItemRemoveSystem {};
+        remove_items.run_now(&self.ecs);
 
         self.ecs.maintain(); // MUST BE AT BOTTOM
     }
@@ -212,6 +217,24 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::ShowRemoveItem => {
+                let result = gui::remove_item_menu(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => new_run_state = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.unwrap();
+                        let mut intent = self.ecs.write_storage::<WantsToRemoveItem>();
+                        intent
+                            .insert(
+                                *self.ecs.fetch::<Entity>(),
+                                WantsToRemoveItem { item: item_entity },
+                            )
+                            .expect("Unable to insert intent");
+                        new_run_state = RunState::PlayerTurn;
+                    }
+                }
+            }
             RunState::MainMenu { .. } => {
                 let result = gui::main_menu(self, ctx);
 
@@ -243,6 +266,19 @@ impl GameState for State {
             RunState::NextLevel => {
                 self.goto_next_level();
                 new_run_state = RunState::PreRun;
+            }
+            RunState::GameOver => {
+                let result = gui::game_over(ctx);
+
+                match result {
+                    gui::GameOverResult::NoSelection => {}
+                    gui::GameOverResult::QuitToMenu => {
+                        self.game_over_cleanup();
+                        new_run_state = RunState::MainMenu {
+                            menu_selection: gui::MainMenuSelection::NewGame,
+                        }
+                    }
+                }
             }
         }
 
@@ -349,6 +385,51 @@ impl State {
             player_health.hp = i32::max(player_health.hp, player_health.max_hp / 2);
         }
     }
+
+    fn game_over_cleanup(&mut self) {
+        // Delete everything
+        let mut to_delete = Vec::new();
+        for e in self.ecs.entities().join() {
+            to_delete.push(e);
+        }
+        for del in to_delete.iter() {
+            self.ecs.delete_entity(*del).expect("Deletion failed");
+        }
+
+        // Build a new map and place the player
+        let worldmap;
+        {
+            let mut worldmap_resource = self.ecs.write_resource::<Map>();
+            *worldmap_resource = Map::new_map_rooms_and_corridors(1);
+            worldmap = worldmap_resource.clone();
+        }
+
+        // Spawn bad guys
+        for room in worldmap.rooms.iter().skip(1) {
+            spawner::spawn_room(&mut self.ecs, room, 1);
+        }
+
+        // Place the player and update resources
+        let (player_x, player_y) = worldmap.rooms[0].center();
+        let player_entity = spawner::player(&mut self.ecs, player_x, player_y);
+        let mut player_position = self.ecs.write_resource::<Point>();
+        *player_position = Point::new(player_x, player_y);
+        let mut position_components = self.ecs.write_storage::<Position>();
+        let mut player_entity_writer = self.ecs.write_resource::<Entity>();
+        *player_entity_writer = player_entity;
+        let player_pos_comp = position_components.get_mut(player_entity);
+        if let Some(player_pos_comp) = player_pos_comp {
+            player_pos_comp.x = player_x;
+            player_pos_comp.y = player_y;
+        }
+
+        // Mark the player's visibility as dirty
+        let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+        let vs = viewshed_components.get_mut(player_entity);
+        if let Some(vs) = vs {
+            vs.dirty = true;
+        }
+    }
 }
 
 fn main() -> rltk::BError {
@@ -385,6 +466,7 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Equipped>();
     gs.ecs.register::<AtkBonus>();
     gs.ecs.register::<DefBonus>();
+    gs.ecs.register::<WantsToRemoveItem>();
 
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
     // https://specs.amethyst.rs/docs/tutorials/13_saveload.html

@@ -82,6 +82,7 @@ pub fn player_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
                 return skip_turn(&mut gs.ecs);
             }
             VirtualKeyCode::Escape => return RunState::SaveGame,
+            VirtualKeyCode::R => return RunState::ShowRemoveItem,
             VirtualKeyCode::D => return RunState::ShowDropItem,
             VirtualKeyCode::I => return RunState::ShowInventory,
             VirtualKeyCode::G => {
