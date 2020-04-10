@@ -1,6 +1,6 @@
 use super::{
-    gamelog::GameLog, CombatStats, Item, Map, Player, Position, RunState, State, TileType,
-    Viewshed, WantsToMelee, WantsToPickupItem,Monster
+    gamelog::GameLog, CombatStats, Item, Map, Monster, Player, Position, RunState, State, TileType,
+    Viewshed, WantsToMelee, WantsToPickupItem,
 };
 
 use rltk::{Point, Rltk, VirtualKeyCode};
@@ -163,15 +163,15 @@ fn skip_turn(ecs: &mut World) -> RunState {
 
     let view = viewshed.get(*player_entity).unwrap();
 
-    for tile in view.visible_tiles.iter(){
-        let idx = world_map.xy_idx(tile.x, tile.y );
+    for tile in view.visible_tiles.iter() {
+        let idx = world_map.xy_idx(tile.x, tile.y);
 
-        for entity_id in world_map.tile_content[idx].iter(){
+        for entity_id in world_map.tile_content[idx].iter() {
             let enemy_group = enemies.get(*entity_id);
 
             match enemy_group {
                 None => {}
-                Some(_) => {can_heal = false}
+                Some(_) => can_heal = false,
             }
         }
     }
@@ -183,7 +183,7 @@ fn skip_turn(ecs: &mut World) -> RunState {
 
         let player_health = health.get_mut(*player_entity).unwrap();
 
-        player_health.hp = i32::min(player_health.hp + 1, player_health.max_hp );
+        player_health.hp = i32::min(player_health.hp + 1, player_health.max_hp);
     }
 
     RunState::PlayerTurn

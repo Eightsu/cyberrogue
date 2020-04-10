@@ -16,6 +16,7 @@ mod rect;
 mod spawner;
 pub use rect::Rect;
 mod gamelog;
+pub mod rand_table;
 
 // SYSTEMS
 mod visibility_system;
@@ -274,7 +275,7 @@ impl State {
 
             let bag = backpack.get(entity);
             if let Some(bag) = bag {
-                if bag.owner == *player_entity{
+                if bag.owner == *player_entity {
                     should_delete = false;
                 }
             }
@@ -294,16 +295,17 @@ impl State {
 
         // rebuild
         let worldmap;
+        let current_depth;
         {
             let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            let current_depth = worldmap_resource.depth;
+            current_depth = worldmap_resource.depth;
             *worldmap_resource = Map::new_map_rooms_and_corridors(current_depth + 1);
             worldmap = worldmap_resource.clone();
         }
 
         //spawn enemies
-        for room in worldmap.rooms.iter().skip(1){
-            spawner::spawn_room(&mut self.ecs, room);
+        for room in worldmap.rooms.iter().skip(1) {
+            spawner::spawn_room(&mut self.ecs, room, current_depth + 1);
         }
 
         // place hero
@@ -316,26 +318,27 @@ impl State {
 
         let player_pos_container = position_components.get_mut(*player_entity);
 
-        if let Some(player_pos_container) = player_pos_container{
+        if let Some(player_pos_container) = player_pos_container {
             player_pos_container.x = player_x;
             player_pos_container.y = player_y;
         }
 
-            //Wipe map visibility
-    let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
-    let vs = viewshed_components.get_mut(*player_entity);
-    if let Some(vs) = vs {
-        vs.dirty = true;
-    }        
+        //Wipe map visibility
+        let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+        let vs = viewshed_components.get_mut(*player_entity);
+        if let Some(vs) = vs {
+            vs.dirty = true;
+        }
 
-    
-    let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
-    gamelog.entries.push("How far will you go? Recharge quickly.".to_string());
-    let mut player_health_store = self.ecs.write_storage::<CombatStats>();
-    let player_health = player_health_store.get_mut(*player_entity);
-    if let Some(player_health) = player_health {
-        player_health.hp = i32::max(player_health.hp, player_health.max_hp / 2);
-    }
+        let mut gamelog = self.ecs.fetch_mut::<gamelog::GameLog>();
+        gamelog
+            .entries
+            .push("How far will you go? Recharge quickly.".to_string());
+        let mut player_health_store = self.ecs.write_storage::<CombatStats>();
+        let player_health = player_health_store.get_mut(*player_entity);
+        if let Some(player_health) = player_health {
+            player_health.hp = i32::max(player_health.hp, player_health.max_hp / 2);
+        }
     }
 }
 
@@ -380,7 +383,7 @@ fn main() -> rltk::BError {
 
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
+        spawner::spawn_room(&mut gs.ecs, room, 1);
     }
 
     gs.ecs.insert(map);
