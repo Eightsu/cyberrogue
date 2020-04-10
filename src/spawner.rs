@@ -35,18 +35,18 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             max_hp: 100,
             hp: 100,
             defense: 2,
-            power: 10,
+            power: 40,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
-const MAX_MONSTERS: i32 = 6;
+const MAX_MONSTERS: i32 = 4;
 // const MAX_ITEMS: i32 = 2;
 
 #[allow(clippy::map_entry)]
 pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32 ) {
-    let mut spawn_table = room_table();
+    let mut spawn_table = room_table(map_depth);
     let mut spawn_points: HashMap<usize, String> = HashMap::new();
 
     {
@@ -106,7 +106,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         })
         .with(Viewshed {
             visible_tiles: Vec::new(),
-            range: 8,
+            range: 14,
             dirty: true,
         })
         .with(Monster {})
@@ -115,10 +115,10 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         })
         .with(BlocksTile {})
         .with(CombatStats {
-            max_hp: 16,
-            hp: 16,
+            max_hp: 20,
+            hp: 20,
             defense: 1,
-            power: 4,
+            power: 6,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -181,7 +181,7 @@ fn shockwave(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumeable {})
         .with(Ranged { range: 6 })
-        .with(InflictsDamage { damage: 5 })
+        .with(InflictsDamage { damage: 30 })
         .with(AreaOfEffect { radius: 3 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -202,18 +202,19 @@ fn overload(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(Consumeable {})
-        .with(Ranged { range: 3 })
-        .with(Disable { turns: 3 })
+        .with(Ranged { range: 8 })
+        .with(Disable { turns: 6 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
-fn room_table() -> RandomTable {
+fn room_table(map_depth: i32) -> RandomTable {
+    // HIGHER NUMBER MEANS HIGHER CHANCE OF SPAWNING
     RandomTable::new()
-        .add("Android", 6)
+        .add("Android", 1 + map_depth)
         .add("Robot", 9)
-        .add("volt_pack", 4)
-        .add("buster", 7)
-        .add("shockwave", 2)
-        .add("overload", 5)
+        .add("volt_pack", i32::min(1, 4 + (map_depth - 5))) // no health packs on the first level 
+        .add("buster", 4)
+        .add("shockwave", 1 + map_depth )
+        .add("overload", 1 + (map_depth - 4))
 }
