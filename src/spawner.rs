@@ -32,16 +32,16 @@ pub fn player(ecs: &mut World, player_x: i32, player_y: i32) -> Entity {
             name: "Hero".to_string(),
         })
         .with(CombatStats {
-            max_hp: 100,
-            hp: 100,
+            max_hp: 25,
+            hp: 25,
             defense: 2,
-            power: 40,
+            power: 6,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build()
 }
 
-const MAX_MONSTERS: i32 = 4;
+const MAX_MONSTERS: i32 = 2;
 // const MAX_ITEMS: i32 = 2;
 
 fn room_table(map_depth: i32) -> RandomTable {
@@ -49,12 +49,14 @@ fn room_table(map_depth: i32) -> RandomTable {
     RandomTable::new()
         .add("Android", 1 + map_depth)
         .add("Robot", 9)
-        .add("volt_pack", i32::min(1, 4 + (map_depth - 5))) // no health packs on the first level
+        .add("volt_pack", map_depth - 1) // no health packs on the first level
         .add("buster", 4)
         .add("shockwave", 1 + map_depth)
-        .add("overload", 1 + (map_depth - 4))
-        .add("powerglove", 9)
-        .add("shield+", 9)
+        .add("overload", 1 + (map_depth - 2))
+        .add("powerglove", 2)
+        .add("shield+", 3)
+        .add("lightblade", map_depth - 3)
+        .add("energyshield", map_depth - 1)
 }
 
 #[allow(clippy::map_entry)]
@@ -97,6 +99,8 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map_depth: i32) {
             "overload" => overload(ecs, x, y),
             "powerglove" => powerglove(ecs, x, y),
             "shield+" => shieldplus(ecs, x, y),
+            "lightblade" => lightblade(ecs, x, y),
+            "energyshield" => energyshield(ecs, x, y),
             _ => {}
         }
     }
@@ -129,10 +133,10 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         })
         .with(BlocksTile {})
         .with(CombatStats {
-            max_hp: 20,
-            hp: 20,
+            max_hp: 10,
+            hp: 10,
             defense: 1,
-            power: 6,
+            power: 8,
         })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -175,7 +179,7 @@ fn buster(ecs: &mut World, x: i32, y: i32) {
         })
         .with(Item {})
         .with(Consumeable {})
-        .with(Ranged { range: 8 })
+        .with(Ranged { range: 4 })
         .with(InflictsDamage { damage: 12 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -197,7 +201,7 @@ fn shockwave(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumeable {})
         .with(Ranged { range: 6 })
-        .with(InflictsDamage { damage: 30 })
+        .with(InflictsDamage { damage: 8 })
         .with(AreaOfEffect { radius: 3 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
@@ -239,7 +243,7 @@ fn powerglove(ecs: &mut World, x: i32, y: i32) {
             name: "Powerglove".to_string(),
         })
         .with(Item {})
-        .with(AtkBonus { amount: 50 })
+        .with(AtkBonus { amount: 4 })
         .with(Equippable {
             slot: EquipmentSlot::Melee,
         })
@@ -260,7 +264,7 @@ fn shieldplus(ecs: &mut World, x: i32, y: i32) {
             name: "Shield+".to_string(),
         })
         .with(Item {})
-        .with(DefBonus { amount: 20 })
+        .with(DefBonus { amount: 2 })
         .with(Equippable {
             slot: EquipmentSlot::Shield,
         })
@@ -281,7 +285,7 @@ fn lightblade(ecs: &mut World, x: i32, y: i32) {
             name: "LIGHTSWORD".to_string(),
         })
         .with(Item {})
-        .with(AtkBonus { amount: 20 })
+        .with(AtkBonus { amount: 6 })
         .with(DefBonus { amount: 5 })
         .with(Equippable {
             slot: EquipmentSlot::Melee,
@@ -303,7 +307,7 @@ fn energyshield(ecs: &mut World, x: i32, y: i32) {
             name: "Energy Shield".to_string(),
         })
         .with(Item {})
-        .with(DefBonus { amount: 15 })
+        .with(DefBonus { amount: 4 })
         .with(Equippable {
             slot: EquipmentSlot::Shield,
         })

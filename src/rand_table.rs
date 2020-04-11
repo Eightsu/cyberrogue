@@ -54,6 +54,6 @@ impl RandomTable {
             roll -= self.entries[index].weight;
             index += 1;
         }
-        return "None".to_string();
+        "None".to_string()
     }
 }
