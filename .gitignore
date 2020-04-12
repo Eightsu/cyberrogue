@@ -1,5 +1,5 @@
 /target
 mainframe-rust-game.code-workspace
-/.DS_Store
 savegame.json
 .VSCodeCounter
+.DS_Store
